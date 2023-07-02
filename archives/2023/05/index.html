@@ -1237,6 +1237,10 @@
             
             <br>
             
+           {% if (theme.51la.enable) { %}
+             <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+             <script>LA.init({id:"{{ theme.51la.id }}",ck:"{{ theme.51la.ck }}"})</script>
+           {% } %}
         </div>
         <div class="col s12 m4 l4 social-link social-statis">
     <a href="https://github.com/ekongyun" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
