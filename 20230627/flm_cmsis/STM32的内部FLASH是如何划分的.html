@@ -1,0 +1,2464 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="STM32的内部FLASH是如何划分的, 改变世界 的技术博客">
+    <meta name="description" content="因为STM32的内部FLASH大小不一，不同的大小划分是不一样的，但是大同小异这里是以STM32F103C8T6为例进行说明。
+基础知识补充
+1 字节       = 8 位（bit）1 千字节（KB）= 1024 字节1 兆字节（MB）=">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>STM32的内部FLASH是如何划分的 | 改变世界 的技术博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <style>
+        body{
+            background-image: url(https://cdn.jsdelivr.net/gh/Tokisaki-Galaxy/res/site/medias/background.jpg);
+            background-repeat:no-repeat;
+            background-size: 100% 100%;
+            background-attachment:fixed;
+        }
+    </style>
+
+
+
+    <!-- bg-cover style     -->
+
+
+
+<link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+<link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+<link rel="stylesheet" type="text/css" href="/css/matery.css">
+<link rel="stylesheet" type="text/css" href="/css/my.css">
+<link rel="stylesheet" type="text/css" href="/css/dark.css" media="none" onload="if(media!='all')media='all'">
+
+
+
+
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+    <link rel="stylesheet" href="/css/post.css">
+
+
+
+
+    
+        <link rel="stylesheet" type="text/css" href="/css/reward.css">
+    
+
+
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+</head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">改变世界 的技术博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/contact" class="waves-effect waves-light">
+      
+      <i class="fas fa-comments" style="zoom: 0.6;"></i>
+      
+      <span>留言板</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="" class="waves-effect waves-light">
+
+      
+      <i class="fas fa-list" style="zoom: 0.6;"></i>
+      
+      <span>更多</span>
+      <i class="fas fa-chevron-down" aria-hidden="true" style="zoom: 0.6;"></i>
+    </a>
+    <ul class="sub-nav menus_item_child ">
+      
+      <li>
+        <a href="/about">
+          
+          <i class="fas fa-user-circle" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>关于</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/friends">
+          
+          <i class="fas fa-address-book" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>友情链接</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+  <li>
+    <a href="javascript:;" class="waves-effect waves-light" onclick="switchNightMode()" title="深色/浅色模式" >
+      <i id="sum-moon-icon" class="fas fa-sun" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">改变世界 的技术博客</div>
+        <div class="logo-desc">
+            
+            专注于单片机开发，反汇编。无源码改功能、改LOGO、升级驱动。现居长沙, 18676693732!
+            
+        </div>
+    </div>
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/contact" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-comments"></i>
+			
+			留言板
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="javascript:;">
+			
+				<i class="fa-fw fas fa-list"></i>
+			
+			更多
+			<span class="m-icon"><i class="fas fa-chevron-right"></i></span>
+		</a>
+            <ul  style="background:  ;" >
+              
+                <li>
+
+                  <a href="/about " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-user-circle" style="position: absolute;left:50px" ></i>
+			      
+		          <span>About</span>
+                  </a>
+                </li>
+              
+                <li>
+
+                  <a href="/friends " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-address-book" style="position: absolute;left:50px" ></i>
+			      
+		          <span>Friends</span>
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/blinkfox/hexo-theme-matery" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/blinkfox/hexo-theme-matery" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+<script src="/libs/cryptojs/crypto-js.min.js"></script>
+<script>
+    (function() {
+        let pwd = '';
+        if (pwd && pwd.length > 0) {
+            if (pwd !== CryptoJS.SHA256(prompt('请输入访问本文章的密码')).toString(CryptoJS.enc.Hex)) {
+                alert('密码错误，将返回主页！');
+                location.href = '/';
+            }
+        }
+    })();
+</script>
+
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">STM32的内部FLASH是如何划分的</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <div class="row">
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/%E7%AE%97%E6%B3%95/">
+                                <span class="chip bg-color">算法</span>
+                            </a>
+                        
+                            <a href="/tags/STM32/">
+                                <span class="chip bg-color">STM32</span>
+                            </a>
+                        
+                            <a href="/tags/FLM/">
+                                <span class="chip bg-color">FLM</span>
+                            </a>
+                        
+                            <a href="/tags/CMSIS-DAP/">
+                                <span class="chip bg-color">CMSIS-DAP</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E7%AE%97%E6%B3%95%E7%A0%94%E7%A9%B6/" class="post-category">
+                                算法研究
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2023-06-27
+                </div>
+                
+
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    27 分
+                </div>
+                
+
+                
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="far fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism-tomorrow.css">
+        
+
+        
+        <!-- 代码块折行 -->
+        <style type="text/css">
+            code[class*="language-"], pre[class*="language-"] { white-space: pre-wrap !important; }
+        </style>
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p>因为STM32的内部FLASH大小不一，不同的大小划分是不一样的，但是大同小异这里是以STM32F103C8T6为例进行说明。</p>
+<h1 id="基础知识补充"><a href="#基础知识补充" class="headerlink" title="基础知识补充"></a>基础知识补充</h1><blockquote>
+<p>1 字节       = 8 位（bit）<br>1 千字节（KB）= 1024 字节<br>1 兆字节（MB）= 1024 千字节（KB）<br>1 吉字节（GB）= 1024 兆字节（MB）<br>1 太字节（TB）= 1024 吉字节（GB）</p>
+</blockquote>
+<p>下面是关于STM32F103C8T6内部Flash划分的详细说明</p>
+<h2 id="容量"><a href="#容量" class="headerlink" title="容量"></a>容量</h2><p>STM32F103C8T6的内部Flash容量为64KB，即64*1024字节,属于小容量产品。<br>以下是针对STM32F1系列芯片的常见型号，按照容量范围划分的示例：</p>
+<table>
+<thead>
+<tr>
+<th align="left">容量范围</th>
+<th align="left">芯片型号</th>
+<th align="left">Flash大小</th>
+<th align="left">容量大小</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">小容量</td>
+<td align="left">STM32F103C8T6</td>
+<td align="left">64 KB</td>
+<td align="left">64 * 1024 字节</td>
+</tr>
+<tr>
+<td align="left"></td>
+<td align="left">STM32F103RCT6</td>
+<td align="left">256 KB</td>
+<td align="left">256 * 1024 字节</td>
+</tr>
+<tr>
+<td align="left">中容量</td>
+<td align="left">STM32F103RBT6</td>
+<td align="left">128 KB</td>
+<td align="left">128 * 1024 字节</td>
+</tr>
+<tr>
+<td align="left"></td>
+<td align="left">STM32F103RET6</td>
+<td align="left">512 KB</td>
+<td align="left">512 * 1024 字节</td>
+</tr>
+<tr>
+<td align="left">大容量</td>
+<td align="left">STM32F103VET6</td>
+<td align="left">512 KB</td>
+<td align="left">512 * 1024 字节</td>
+</tr>
+<tr>
+<td align="left"></td>
+<td align="left">STM32F103ZET6</td>
+<td align="left">1024 KB</td>
+<td align="left">1024 * 1024 字节</td>
+</tr>
+</tbody></table>
+<h2 id="扇区划分"><a href="#扇区划分" class="headerlink" title="扇区划分"></a>扇区划分</h2><p>内部Flash存储器被划分为多个扇区，每个扇区的大小为2KB或4KB，具体划分取决于具体的芯片型号。</p>
+<table>
+<thead>
+<tr>
+<th align="left">Flash大小</th>
+<th align="left">地址范围</th>
+<th align="left">扇区大小</th>
+<th align="left">最后扇区地址</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">64KB</td>
+<td align="left">0x08000000~0x08010000-1</td>
+<td align="left">1KB=0x400</td>
+<td align="left">0x0800FC00</td>
+</tr>
+<tr>
+<td align="left">128K</td>
+<td align="left">0x08000000~0x08020000-1</td>
+<td align="left">1KB=0x400</td>
+<td align="left">0x0801FC00</td>
+</tr>
+<tr>
+<td align="left">256K</td>
+<td align="left">0x08000000~0x08040000-1</td>
+<td align="left">2KB=0x800</td>
+<td align="left">0x0803F800</td>
+</tr>
+<tr>
+<td align="left">512K</td>
+<td align="left">0x08000000~0x08080000-1</td>
+<td align="left">2KB=0x800</td>
+<td align="left">0x0807F800</td>
+</tr>
+</tbody></table>
+<h2 id="STM32F103C8T6-64KB的扇区划分"><a href="#STM32F103C8T6-64KB的扇区划分" class="headerlink" title="STM32F103C8T6(64KB的扇区划分)"></a>STM32F103C8T6(64KB的扇区划分)</h2><table>
+<thead>
+<tr>
+<th align="left">扇区编号</th>
+<th align="left">起始地址</th>
+<th align="left">结束地址</th>
+<th align="left">大小</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">扇区0</td>
+<td align="left">0x08000000</td>
+<td align="left">0x080003FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区1</td>
+<td align="left">0x08000400</td>
+<td align="left">0x080007FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区2</td>
+<td align="left">0x08000800</td>
+<td align="left">0x08000BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区3</td>
+<td align="left">0x08000C00</td>
+<td align="left">0x08000FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区4</td>
+<td align="left">0x08001000</td>
+<td align="left">0x080013FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区5</td>
+<td align="left">0x08001400</td>
+<td align="left">0x080017FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区6</td>
+<td align="left">0x08001800</td>
+<td align="left">0x08001BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区7</td>
+<td align="left">0x08001C00</td>
+<td align="left">0x08001FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区8</td>
+<td align="left">0x08002000</td>
+<td align="left">0x080023FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区9</td>
+<td align="left">0x08002400</td>
+<td align="left">0x080027FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区10</td>
+<td align="left">0x08002800</td>
+<td align="left">0x08002BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区11</td>
+<td align="left">0x08002C00</td>
+<td align="left">0x08002FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区12</td>
+<td align="left">0x08003000</td>
+<td align="left">0x080033FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区13</td>
+<td align="left">0x08003400</td>
+<td align="left">0x080037FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区14</td>
+<td align="left">0x08003800</td>
+<td align="left">0x08003BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区15</td>
+<td align="left">0x08003C00</td>
+<td align="left">0x08003FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区16</td>
+<td align="left">0x08004000</td>
+<td align="left">0x080043FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区17</td>
+<td align="left">0x08004400</td>
+<td align="left">0x080047FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区18</td>
+<td align="left">0x08004800</td>
+<td align="left">0x08004BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区19</td>
+<td align="left">0x08004C00</td>
+<td align="left">0x08004FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区20</td>
+<td align="left">0x08005000</td>
+<td align="left">0x080053FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区21</td>
+<td align="left">0x08005400</td>
+<td align="left">0x080057FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区22</td>
+<td align="left">0x08005800</td>
+<td align="left">0x08005BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区23</td>
+<td align="left">0x08005C00</td>
+<td align="left">0x08005FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区24</td>
+<td align="left">0x08006000</td>
+<td align="left">0x080063FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区25</td>
+<td align="left">0x08006400</td>
+<td align="left">0x080067FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区26</td>
+<td align="left">0x08006800</td>
+<td align="left">0x08006BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区27</td>
+<td align="left">0x08006C00</td>
+<td align="left">0x08006FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区28</td>
+<td align="left">0x08007000</td>
+<td align="left">0x080073FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区29</td>
+<td align="left">0x08007400</td>
+<td align="left">0x080077FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区30</td>
+<td align="left">0x08007800</td>
+<td align="left">0x08007BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区31</td>
+<td align="left">0x08007C00</td>
+<td align="left">0x08007FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区32</td>
+<td align="left">0x08008000</td>
+<td align="left">0x080083FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区33</td>
+<td align="left">0x08008400</td>
+<td align="left">0x080087FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区34</td>
+<td align="left">0x08008800</td>
+<td align="left">0x08008BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区35</td>
+<td align="left">0x08008C00</td>
+<td align="left">0x08008FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区36</td>
+<td align="left">0x08009000</td>
+<td align="left">0x080093FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区37</td>
+<td align="left">0x08009400</td>
+<td align="left">0x080097FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区38</td>
+<td align="left">0x08009800</td>
+<td align="left">0x08009BFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区39</td>
+<td align="left">0x08009C00</td>
+<td align="left">0x08009FFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区40</td>
+<td align="left">0x0800A000</td>
+<td align="left">0x0800A3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区41</td>
+<td align="left">0x0800A400</td>
+<td align="left">0x0800A7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区42</td>
+<td align="left">0x0800A800</td>
+<td align="left">0x0800ABFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区43</td>
+<td align="left">0x0800AC00</td>
+<td align="left">0x0800AFFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区44</td>
+<td align="left">0x0800B000</td>
+<td align="left">0x0800B3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区45</td>
+<td align="left">0x0800B400</td>
+<td align="left">0x0800B7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区46</td>
+<td align="left">0x0800B800</td>
+<td align="left">0x0800BBFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区47</td>
+<td align="left">0x0800BC00</td>
+<td align="left">0x0800BFFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区48</td>
+<td align="left">0x0800C000</td>
+<td align="left">0x0800C3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区49</td>
+<td align="left">0x0800C400</td>
+<td align="left">0x0800C7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区50</td>
+<td align="left">0x0800C800</td>
+<td align="left">0x0800CBFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区51</td>
+<td align="left">0x0800CC00</td>
+<td align="left">0x0800CFFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区52</td>
+<td align="left">0x0800D000</td>
+<td align="left">0x0800D3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区53</td>
+<td align="left">0x0800D400</td>
+<td align="left">0x0800D7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区54</td>
+<td align="left">0x0800D800</td>
+<td align="left">0x0800DBFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区55</td>
+<td align="left">0x0800DC00</td>
+<td align="left">0x0800DFFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区56</td>
+<td align="left">0x0800E000</td>
+<td align="left">0x0800E3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区57</td>
+<td align="left">0x0800E400</td>
+<td align="left">0x0800E7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区58</td>
+<td align="left">0x0800E800</td>
+<td align="left">0x0800EBFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区59</td>
+<td align="left">0x0800EC00</td>
+<td align="left">0x0800EFFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区60</td>
+<td align="left">0x0800F000</td>
+<td align="left">0x0800F3FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区61</td>
+<td align="left">0x0800F400</td>
+<td align="left">0x0800F7FF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区62</td>
+<td align="left">0x0800F800</td>
+<td align="left">0x0800FBFF</td>
+<td align="left">1 KB</td>
+</tr>
+<tr>
+<td align="left">扇区63</td>
+<td align="left">0x0800FC00</td>
+<td align="left">0x0800FFFF</td>
+<td align="left">1 KB</td>
+</tr>
+</tbody></table>
+<p>请注意，以上表格中的地址是以十六进制表示。每个扇区的大小为1KB（0x400字节）。最后一个扇区地址为0x0800FC00，范围为0x0800FC00-0x0800FFFF，大小为1KB。</p>
+<h1 id="STM32的内部FLASH是干什么用的？"><a href="#STM32的内部FLASH是干什么用的？" class="headerlink" title="STM32的内部FLASH是干什么用的？"></a>STM32的内部FLASH是干什么用的？</h1><p>STM32的内部Flash主要用于存储程序代码（固件）和只读数据。</p>
+<ul>
+<li>程序代码（固件）：内部Flash是存储微控制器的程序代码的主要地方。它包含了应用程序的指令集，包括启动代码、中断处理程序、函数和其他执行代码。这些代码定义了系统的功能和行为。通常是编译生成的HEX文件或者BIN文件。</li>
+<li>只读数据：内部Flash还可以用于存储只读数据，如常量、配置信息和校准数据等。这些数据在程序执行期间是只读的，不会被修改。</li>
+<li>Bootloader：一些STM32芯片内置了Bootloader，它是一个特殊的程序，用于在启动时加载和更新应用程序的固件。Bootloader通常存储在内部Flash的特定区域，并负责固件的升级和管理。</li>
+</ul>
+<h1 id="STM32的内部FLASH该如何读写数据呢？"><a href="#STM32的内部FLASH该如何读写数据呢？" class="headerlink" title="STM32的内部FLASH该如何读写数据呢？"></a>STM32的内部FLASH该如何读写数据呢？</h1><h2 id="读写内部FLASH的一般步骤"><a href="#读写内部FLASH的一般步骤" class="headerlink" title="读写内部FLASH的一般步骤"></a>读写内部FLASH的一般步骤</h2><p>在STM32微控制器中，内部Flash的读写操作通常通过以下步骤进行：</p>
+<ol>
+<li>启用Flash访问：在进行Flash读写之前，需要先启用对Flash的访问权限。这可以通过设置Flash控制寄存器（FLASH_CR）中的特定位来实现。例如，将FLASH_CR的PG位设置为1，表示启用对Flash的编程访问。</li>
+<li>解锁Flash：在进行Flash编程之前，需要解锁Flash以允许对其进行写操作。通过向FLASH_KEYR寄存器写入特定值来解锁Flash。要解锁Flash，首先写入0x45670123，然后立即写入0xCDEF89AB到FLASH_KEYR寄存器。</li>
+<li>检查Flash状态：在进行Flash编程之前，需要检查Flash是否处于忙碌状态。可以通过读取FLASH_SR寄存器中的BSY位来判断Flash是否处于忙碌状态。如果BSY位为1，表示Flash正在执行操作，需要等待。</li>
+<li>执行Flash编程：Flash编程可以通过直接写入特定地址处的数据来实现。要编程Flash，将要写入的数据写入Flash目标地址。请注意，写入操作是按字进行的，即每次写入4个字节。可以使用特定的函数或指针访问要编程的Flash地址。</li>
+<li>等待Flash操作完成：在执行Flash编程后，需要等待编程操作完成。可以通过轮询FLASH_SR寄存器中的BSY位来检查Flash是否仍处于忙碌状态。当BSY位为0时，表示Flash操作已完成。</li>
+<li>锁定Flash：完成Flash编程后，应该锁定Flash以防止意外修改。通过将FLASH_CR寄存器中的LOCK位设置为1，可以锁定Flash。<br>请注意，进行Flash编程时需要小心，因为不正确的操作可能会导致Flash数据的损坏。建议在编程Flash之前仔细阅读相关的芯片参考手册，并按照手册中提供的准确步骤和注意事项进行操作。需要注意的是可以使用官方提供的库和API函数来简化Flash读写的操作。</li>
+</ol>
+<h1 id="库函数接口操作内部FLASH接口解析"><a href="#库函数接口操作内部FLASH接口解析" class="headerlink" title="库函数接口操作内部FLASH接口解析"></a>库函数接口操作内部FLASH接口解析</h1><h2 id="解锁Flash代码解析"><a href="#解锁Flash代码解析" class="headerlink" title="解锁Flash代码解析"></a>解锁Flash代码解析</h2><pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+  * @brief  Unlocks the FLASH Bank1 Program Erase Controller.
+  * @note   This function can be used for all STM32F10x devices.
+  *         - For STM32F10X_XL devices this function unlocks Bank1.
+  *         - For all other devices it unlocks Bank1 and it is 
+  *           equivalent to FLASH_Unlock function.
+  * @param  None
+  * @retval None
+  *&#x2F;
+void FLASH_UnlockBank1(void)
+&#123;
+  &#x2F;* Authorize the FPEC of Bank1 Access *&#x2F;
+  FLASH-&gt;KEYR &#x3D; FLASH_KEY1;
+  FLASH-&gt;KEYR &#x3D; FLASH_KEY2;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>这段代码是用于解锁STM32的Bank1程序擦除控制器（Program Erase Controller）。以下是该代码的解释：<br>该函数用于解锁STM32的Bank1程序擦除控制器，适用于所有STM32F10x系列的设备。对于STM32F10X_XL系列的设备，该函数解锁Bank1。对于其他设备，它解锁Bank1并等效于FLASH_Unlock函数。<br>该函数没有参数。<br>函数的返回值为None。<br>函数内部的操作是通过向FLASH-&gt;KEYR寄存器写入特定值来实现解锁。具体来说，两次写入FLASH_KEY1（宏定义的值）到FLASH-&gt;KEYR寄存器，以解锁Bank1的访问权限。</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+  * @brief  Unlocks the FLASH Bank2 Program Erase Controller.
+  * @note   This function can be used only for STM32F10X_XL density devices.
+  * @param  None
+  * @retval None
+  *&#x2F;
+void FLASH_UnlockBank2(void)
+&#123;
+  &#x2F;* Authorize the FPEC of Bank2 Access *&#x2F;
+  FLASH-&gt;KEYR2 &#x3D; FLASH_KEY1;
+  FLASH-&gt;KEYR2 &#x3D; FLASH_KEY2;
+
+&#125;
+
+&#x2F;**
+  * @brief  Unlocks the FLASH Program Erase Controller.
+  * @note   This function can be used for all STM32F10x devices.
+  *         - For STM32F10X_XL devices this function unlocks Bank1 and Bank2.
+  *         - For all other devices it unlocks Bank1 and it is equivalent 
+  *           to FLASH_UnlockBank1 function.. 
+  * @param  None
+  * @retval None
+  *&#x2F;
+void FLASH_Unlock(void)
+&#123;
+  &#x2F;* Authorize the FPEC of Bank1 Access *&#x2F;
+  FLASH-&gt;KEYR &#x3D; FLASH_KEY1;
+  FLASH-&gt;KEYR &#x3D; FLASH_KEY2;
+
+#ifdef STM32F10X_XL
+  &#x2F;* Authorize the FPEC of Bank2 Access *&#x2F;
+  FLASH-&gt;KEYR2 &#x3D; FLASH_KEY1;
+  FLASH-&gt;KEYR2 &#x3D; FLASH_KEY2;
+#endif &#x2F;* STM32F10X_XL *&#x2F;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>总结：FLASH_Unlock包括 FLASH_UnlockBank1和 FLASH_UnlockBank2取决于芯片类型</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;* FLASH Keys *&#x2F;
+#define RDP_Key                  ((uint16_t)0x00A5)
+#define FLASH_KEY1               ((uint32_t)0x45670123)
+#define FLASH_KEY2               ((uint32_t)0xCDEF89AB)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<ul>
+<li>RDP_Key：<br>这是用于设置读保护(RDP)级别的密钥。读保护是一种保护机制，用于防止未授权的读取对Flash的访问。通过将RDP_Key写入特定的Flash寄存器，可以设置读保护级别。0x00A5是预定义的RDP_Key值。</li>
+<li>FLASH_KEY1和FLASH_KEY2：<br>这两个密钥是用于解锁Flash的访问权限的。当需要对Flash进行编程、擦除等操作时，需要先解锁Flash。FLASH_KEY1和FLASH_KEY2是两个32位的特定值，通过连续写入这两个值到FLASH-&gt;KEYR寄存器，可以解锁Flash的访问权限。FLASH_KEY1的值为0x45670123，FLASH_KEY2的值为0xCDEF89AB。</li>
+</ul>
+</blockquote>
+<h2 id="上锁Flash代码解析"><a href="#上锁Flash代码解析" class="headerlink" title="上锁Flash代码解析"></a>上锁Flash代码解析</h2><pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+  * @brief  Locks the FLASH Bank1 Program Erase Controller.
+  * @note   this function can be used for all STM32F10x devices.
+  *         - For STM32F10X_XL devices this function Locks Bank1.
+  *         - For all other devices it Locks Bank1 and it is equivalent 
+  *           to FLASH_Lock function.
+  * @param  None
+  * @retval None
+  *&#x2F;
+void FLASH_LockBank1(void)
+&#123;
+  &#x2F;* Set the Lock Bit to lock the FPEC and the CR of  Bank1 *&#x2F;
+  FLASH-&gt;CR |&#x3D; CR_LOCK_Set;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>这段代码是用于锁定STM32的Bank1程序擦除控制器（Program Erase Controller）。以下是该代码的解释：<br>该函数用于锁定STM32的Bank1程序擦除控制器，适用于所有STM32F10x系列的设备。对于STM32F10X_XL系列的设备，该函数锁定Bank1。对于其他设备，它锁定Bank1并等效于FLASH_Lock函数。<br>该函数没有参数。<br>函数的返回值为None。<br>函数内部的操作是通过将CR_LOCK_Set（宏定义的值）设置到FLASH-&gt;CR寄存器的LOCK位，从而锁定Bank1的访问权限。具体来说，使用按位或操作符将CR_LOCK_Set设置到FLASH-&gt;CR寄存器的LOCK位，以锁定Flash的访问权限。</p>
+</blockquote>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;**
+  * @brief  Locks the FLASH Bank2 Program Erase Controller.
+  * @note   This function can be used only for STM32F10X_XL density devices.
+  * @param  None
+  * @retval None
+  *&#x2F;
+void FLASH_LockBank2(void)
+&#123;
+  &#x2F;* Set the Lock Bit to lock the FPEC and the CR of  Bank2 *&#x2F;
+  FLASH-&gt;CR2 |&#x3D; CR_LOCK_Set;
+&#125;
+
+&#x2F;**
+  * @brief  Locks the FLASH Program Erase Controller.
+  * @note   This function can be used for all STM32F10x devices.
+  *         - For STM32F10X_XL devices this function Locks Bank1 and Bank2.
+  *         - For all other devices it Locks Bank1 and it is equivalent 
+  *           to FLASH_LockBank1 function.
+  * @param  None
+  * @retval None
+  *&#x2F;
+
+void FLASH_Lock(void)
+&#123;
+  &#x2F;* Set the Lock Bit to lock the FPEC and the CR of  Bank1 *&#x2F;
+  FLASH-&gt;CR |&#x3D; CR_LOCK_Set;
+
+#ifdef STM32F10X_XL
+  &#x2F;* Set the Lock Bit to lock the FPEC and the CR of  Bank2 *&#x2F;
+  FLASH-&gt;CR2 |&#x3D; CR_LOCK_Set;
+#endif &#x2F;* STM32F10X_XL *&#x2F;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>总结：FLASH_Lock包括 FLASH_LockBank1和 FLASH_LockBank2取决于芯片类型</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;* Flash Control Register bits *&#x2F;
+#define CR_PG_Set                ((uint32_t)0x00000001)
+#define CR_PG_Reset              ((uint32_t)0x00001FFE) 
+#define CR_PER_Set               ((uint32_t)0x00000002)
+#define CR_PER_Reset             ((uint32_t)0x00001FFD)
+#define CR_MER_Set               ((uint32_t)0x00000004)
+#define CR_MER_Reset             ((uint32_t)0x00001FFB)
+#define CR_OPTPG_Set             ((uint32_t)0x00000010)
+#define CR_OPTPG_Reset           ((uint32_t)0x00001FEF)
+#define CR_OPTER_Set             ((uint32_t)0x00000020)
+#define CR_OPTER_Reset           ((uint32_t)0x00001FDF)
+#define CR_STRT_Set              ((uint32_t)0x00000040)
+#define CR_LOCK_Set              ((uint32_t)0x00000080)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段代码定义了一些与Flash控制寄存器（Control Register）相关的位掩码（bits）。以下是这些位掩码的解释：</p>
+<blockquote>
+<ul>
+<li>CR_PG_Set和CR_PG_Reset：<br>用于编程Flash的位掩码。CR_PG_Set将FLASH-&gt;CR寄存器的PG位设置为1，表示启用Flash编程访问。CR_PG_Reset将FLASH-&gt;CR寄存器的PG位复位为0，表示禁用Flash编程访问。</li>
+<li>CR_PER_Set和CR_PER_Reset：<br>用于擦除Flash扇区的位掩码。CR_PER_Set将FLASH-&gt;CR寄存器的PER位设置为1，表示启用Flash扇区擦除。CR_PER_Reset将FLASH-&gt;CR寄存器的PER位复位为0，表示禁用Flash扇区擦除。</li>
+<li>CR_MER_Set和CR_MER_Reset：<br>用于擦除整个Flash存储器的位掩码。CR_MER_Set将FLASH-&gt;CR寄存器的MER位设置为1，表示启用Flash全片擦除。CR_MER_Reset将FLASH-&gt;CR寄存器的MER位复位为0，表示禁用Flash全片擦除。</li>
+<li>CR_OPTPG_Set和CR_OPTPG_Reset：<br>用于编程Flash选项字节的位掩码。CR_OPTPG_Set将FLASH-&gt;CR寄存器的OPTPG位设置为1，表示启用Flash选项字节编程。CR_OPTPG_Reset将FLASH-&gt;CR寄存器的OPTPG位复位为0，表示禁用Flash选项字节编程。</li>
+<li>CR_OPTER_Set和CR_OPTER_Reset：<br>用于擦除Flash选项字节的位掩码。CR_OPTER_Set将FLASH-&gt;CR寄存器的OPTER位设置为1，表示启用Flash选项字节擦除。CR_OPTER_Reset将FLASH-&gt;CR寄存器的OPTER位复位为0，表示禁用Flash选项字节擦除。</li>
+<li>CR_STRT_Set：<br>用于启动Flash操作的位掩码。CR_STRT_Set将FLASH-&gt;CR寄存器的STRT位设置为1，表示启动Flash编程或擦除操作。</li>
+<li>CR_LOCK_Set：<br>用于锁定Flash的位掩码。CR_LOCK_Set将FLASH-&gt;CR寄存器的LOCK位设置为1，表示锁定Flash的访问权限。</li>
+</ul>
+</blockquote>
+<p>这些位掩码用于在进行Flash编程、擦除和操作期间设置或复位Flash控制寄存器中的特定位。在实际应用中，可以根据需要使用这些位掩码来配置和控制Flash的操作。</p>
+<h1 id="STM32库函数中FLASH擦除操作相关函数解析"><a href="#STM32库函数中FLASH擦除操作相关函数解析" class="headerlink" title="STM32库函数中FLASH擦除操作相关函数解析"></a>STM32库函数中FLASH擦除操作相关函数解析</h1><pre class="line-numbers language-none"><code class="language-none">FLASH_Status FLASH_ErasePage(uint32_t Page_Address);
+FLASH_Status FLASH_EraseAllPages(void);
+FLASH_Status FLASH_EraseOptionBytes(void);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>这是三个函数用于擦除STM32的Flash存储器中的页面和选项字节。以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>FLASH_Status FLASH_ErasePage(uint32_t Page_Address)：<br>该函数用于擦除指定地址的Flash存储器页面。Page_Address参数表示要擦除的页面的起始地址。函数返回一个FLASH_Status类型的值，表示擦除操作的状态。可能的返回值包括：<ul>
+<li>FLASH_COMPLETE：擦除操作成功完成。</li>
+<li>FLASH_BUSY：擦除操作正在进行中。</li>
+<li>FLASH_ERROR_WRP：擦除操作失败，由于写保护设置导致的错误。</li>
+<li>FLASH_ERROR_PG：擦除操作失败，由于编程错误导致的错误。</li>
+</ul>
+</li>
+<li>FLASH_Status FLASH_EraseAllPages(void)：<br>该函数用于擦除Flash存储器中的所有页面。函数返回一个FLASH_Status类型的值，表示擦除操作的状态。</li>
+<li>FLASH_Status FLASH_EraseOptionBytes(void)：<br>该函数用于擦除Flash存储器中的选项字节。选项字节是一些用于配置Flash存储器和设备行为的特殊字节。函数返回一个FLASH_Status类型的值，表示擦除操作的状态。</li>
+</ol>
+</blockquote>
+<p>这些函数用于在运行时对Flash存储器进行擦除操作。在调用这些函数之前，请确保已经解锁Flash的访问权限（通过调用FLASH_Unlock函数）</p>
+<h2 id="STM32库函数中FLASH写操作相关函数解析"><a href="#STM32库函数中FLASH写操作相关函数解析" class="headerlink" title="STM32库函数中FLASH写操作相关函数解析"></a>STM32库函数中FLASH写操作相关函数解析</h2><pre class="line-numbers language-none"><code class="language-none">FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data);
+FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data);
+FLASH_Status FLASH_ProgramOptionByteData(uint32_t Address, uint8_t Data);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>这是三个函数用于将数据编程到STM32的Flash存储器中。以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data)：<br>该函数用于将一个32位的数据（Data）编程到指定地址（Address）的Flash存储器中。函数返回一个FLASH_Status类型的值，表示编程操作的状态。</li>
+<li>FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data)：<br>该函数用于将一个16位的数据（Data）编程到指定地址（Address）的Flash存储器中。函数返回一个FLASH_Status类型的值，表示编程操作的状态。</li>
+<li>FLASH_Status FLASH_ProgramOptionByteData(uint32_t Address, uint8_t Data)：<br>该函数用于将一个8位的数据（Data）编程到指定地址（Address）的Flash存储器的选项字节中。选项字节是一些用于配置Flash存储器和设备行为的特殊字节。函数返回一个FLASH_Status类型的值，表示编程操作的状态。</li>
+</ol>
+</blockquote>
+<p>这些函数可以在运行时使用，将数据编程到Flash存储器中。在调用这些函数之前，请确保已经解锁Flash的访问权限（通过调用FLASH_Unlock函数）。在编程之前，请确保已经擦除了要写入的Flash页面。</p>
+<h2 id="STM32库函数中FLASH写保护、读出保护、配置选项字节操作相关函数解析"><a href="#STM32库函数中FLASH写保护、读出保护、配置选项字节操作相关函数解析" class="headerlink" title="STM32库函数中FLASH写保护、读出保护、配置选项字节操作相关函数解析"></a>STM32库函数中FLASH写保护、读出保护、配置选项字节操作相关函数解析</h2><pre class="line-numbers language-none"><code class="language-none">LASH_Status FLASH_EnableWriteProtection(uint32_t FLASH_Pages);
+FLASH_Status FLASH_ReadOutProtection(FunctionalState NewState);
+FLASH_Status FLASH_UserOptionByteConfig(uint16_t OB_IWDG, uint16_t OB_STOP, uint16_t OB_STDBY);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>FLASH_Status FLASH_EnableWriteProtection(uint32_t FLASH_Pages)：<br>该函数用于启用Flash存储器中指定页面（FLASH_Pages）的写保护。写保护功能可以防止对特定页面的数据写入操作。函数返回一个FLASH_Status类型的值，表示操作的状态。</li>
+<li>FLASH_Status FLASH_ReadOutProtection(FunctionalState NewState)：<br>该函数用于配置Flash存储器的读出保护功能。NewState参数用于启用或禁用读出保护功能。函数返回一个FLASH_Status类型的值，表示操作的状态。</li>
+<li>FLASH_Status FLASH_UserOptionByteConfig(uint16_t OB_IWDG, uint16_t OB_STOP, uint16_t OB_STDBY)：<br>该函数用于配置用户选项字节（User Option Bytes），用于设置设备的特定选项。OB_IWDG、OB_STOP和OB_STDBY参数用于配置选项字节的不同选项。函数返回一个FLASH_Status类型的值，表示操作的状态。</li>
+</ol>
+</blockquote>
+<p>这些函数用于在运行时对Flash存储器进行写保护、读出保护和配置选项字节的操作。在调用这些函数之前，请确保已经解锁Flash的访问权限（通过调用FLASH_Unlock函数）。</p>
+<h2 id="STM32库函数中FLASH获取相关设置结果的函数解析"><a href="#STM32库函数中FLASH获取相关设置结果的函数解析" class="headerlink" title="STM32库函数中FLASH获取相关设置结果的函数解析"></a>STM32库函数中FLASH获取相关设置结果的函数解析</h2><pre class="line-numbers language-none"><code class="language-none">uint32_t FLASH_GetUserOptionByte(void);
+uint32_t FLASH_GetWriteProtectionOptionByte(void);
+FlagStatus FLASH_GetReadOutProtectionStatus(void);
+FlagStatus FLASH_GetPrefetchBufferStatus(void);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>uint32_t FLASH_GetUserOptionByte(void)：<br>该函数用于获取用户选项字节（User Option Bytes）的值。用户选项字节是用于设置设备的特定选项的字节。</li>
+<li>uint32_t FLASH_GetWriteProtectionOptionByte(void)：<br>该函数用于获取写保护选项字节的值。写保护选项字节用于配置Flash存储器中的写保护功能。</li>
+<li>FlagStatus FLASH_GetReadOutProtectionStatus(void)：<br>该函数用于获取Flash存储器的读出保护状态。返回的FlagStatus类型值表示读出保护是否已启用。</li>
+<li>FlagStatus FLASH_GetPrefetchBufferStatus(void)：<br>该函数用于获取预取缓存器（Prefetch Buffer）的状态。返回的FlagStatus类型值表示预取缓存器是否已启用。</li>
+</ol>
+</blockquote>
+<p>这些函数用于获取Flash存储器的信息,跟上面的函数作用相反</p>
+<h2 id="STM32库函数中FLASH有关中断配置以及执行状态获取的函数解析"><a href="#STM32库函数中FLASH有关中断配置以及执行状态获取的函数解析" class="headerlink" title="STM32库函数中FLASH有关中断配置以及执行状态获取的函数解析"></a>STM32库函数中FLASH有关中断配置以及执行状态获取的函数解析</h2><pre class="line-numbers language-none"><code class="language-none">void FLASH_ITConfig(uint32_t FLASH_IT, FunctionalState NewState);
+FlagStatus FLASH_GetFlagStatus(uint32_t FLASH_FLAG);
+void FLASH_ClearFlag(uint32_t FLASH_FLAG);
+FLASH_Status FLASH_GetStatus(void);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>void FLASH_ITConfig(uint32_t FLASH_IT, FunctionalState NewState)：<br>该函数用于配置Flash存储器的中断功能。FLASH_IT参数用于指定要配置的中断类型，NewState参数用于启用或禁用中断功能。</li>
+<li>FlagStatus FLASH_GetFlagStatus(uint32_t FLASH_FLAG)：<br>该函数用于获取指定Flash标志位的状态。FLASH_FLAG参数用于指定要查询的标志位，返回的FlagStatus类型值表示标志位的状态。</li>
+<li>void FLASH_ClearFlag(uint32_t FLASH_FLAG)：<br>该函数用于清除指定的Flash标志位。FLASH_FLAG参数用于指定要清除的标志位。</li>
+<li>FLASH_Status FLASH_GetStatus(void)：<br>该函数用于获取Flash存储器的状态。<br>这些函数用于操作Flash存储器的中断和标志位。使用FLASH_ITConfig函数可以配置Flash存储器的中断功能，通过指定FLASH_IT参数来选择要配置的中断类型，通过NewState参数来启用或禁用中断。使用FLASH_GetFlagStatus函数可以获取指定标志位的状态，通过指定FLASH_FLAG参数来选择要查询的标志位，返回的FlagStatus类型值表示标志位的状态。使用FLASH_ClearFlag函数可以清除指定的标志位，通过指定FLASH_FLAG参数来选择要清除的标志位。</li>
+</ol>
+</blockquote>
+<p>一般在进行FLASH之前会认为的清除对应标准确保FLASH处于未被操作的状态。也可以通过FLASH_GetStatus函数来获取Flash存储器的状态。<br>以便根据需要采取相应的处理措施。<br>返回值类型为 <code>FLASH_Status</code>，表示Flash存储器的操作状态。可能的返回值包括：</p>
+<ul>
+<li>FLASH_COMPLETE：上一次的Flash操作已完成。</li>
+<li>FLASH_TIMEOUT：Flash操作超时。</li>
+<li>FLASH_BUSY：Flash存储器正忙，无法执行新的操作。</li>
+<li>FLASH_ERROR_PG：Flash编程错误，写入数据失败。</li>
+<li>FLASH_ERROR_WRP：Flash写保护错误，无法写入数据。</li>
+</ul>
+<p>函数 <code>FLASH_Status FLASH_WaitForLastOperation(uint32_t Timeout)</code> 用于等待Flash存储器上一次操作的完成。<br>该函数的参数 Timeout是等待超时的时间，单位为毫秒。如果上一次的Flash操作在指定的超时时间内完成，函数将返回 FLASH_COMPLETE，表示操作已完成。如果超过了指定的超时时间，函数将返回 FLASH_TIMEOUT，表示操作超时。<br>返回值类型为 <code>FLASH_Status</code>，表示Flash存储器的操作状态。可能的返回值包括：</p>
+<ul>
+<li>FLASH_COMPLETE：上一次的Flash操作已完成。</li>
+<li>FLASH_TIMEOUT：Flash操作超时。</li>
+<li>FLASH_BUSY：Flash存储器正忙，无法执行新的操作。</li>
+<li>FLASH_ERROR_PG：Flash编程错误，写入数据失败。</li>
+<li>FLASH_ERROR_WRP：Flash写保护错误，无法写入数据。</li>
+</ul>
+<p>通过调用该函数，并传入适当的超时时间，可以等待Flash存储器上一次操作的完成，并根据返回值判断操作的状态。这样可以确保在进行下一次Flash操作之前，上一次操作已经完成。确保程序执行的正确性。</p>
+<h1 id="STM32库函数中有关FLASH性能配置的几个函数"><a href="#STM32库函数中有关FLASH性能配置的几个函数" class="headerlink" title="STM32库函数中有关FLASH性能配置的几个函数"></a>STM32库函数中有关FLASH性能配置的几个函数</h1><pre class="line-numbers language-none"><code class="language-none">void FLASH_SetLatency(uint32_t FLASH_Latency);
+void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess);
+void FLASH_PrefetchBufferCmd(uint32_t FLASH_PrefetchBuffer);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>这三个函数用于配置STM32的Flash存储器访问性能和优化选项。以下是这些函数的解释：</p>
+<blockquote>
+<ol>
+<li>void FLASH_SetLatency(uint32_t FLASH_Latency)：<br>该函数用于设置Flash存储器的访问延迟（Latency）。Flash存储器的访问延迟是指在访问Flash数据时需要的等待周期数。FLASH_Latency参数是一个表示访问延迟的值，具体取决于系统时钟频率和Flash存储器的性能特性。</li>
+<li>void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess)：<br>该函数用于配置Flash存储器的半周期访问。FLASH_HalfCycleAccess参数用于启用或禁用Flash存储器的半周期访问模式。在半周期访问模式下，访问Flash存储器的时钟周期被减半，可以提高Flash存储器的访问速度。参数FLASH_HalfCycleAccess可以是以下值之一：<ul>
+<li>FLASH_HalfCycleAccess_Enable：启用半周期访问模式。</li>
+<li>FLASH_HalfCycleAccess_Disable：禁用半周期访问模式。</li>
+</ul>
+</li>
+<li>void FLASH_PrefetchBufferCmd(uint32_t FLASH_PrefetchBuffer)：<br>该函数用于配置Flash存储器的预取缓冲区。预取缓冲区是用于提前读取Flash数据的缓冲区，可以加速Flash数据的访问。FLASH_PrefetchBuffer参数用于启用或禁用Flash存储器的预取缓冲区。参数FLASH_PrefetchBuffer可以是以下值之一：<ul>
+<li>FLASH_PrefetchBuffer_Enable：启用预取缓冲区。</li>
+<li>FLASH_PrefetchBuffer_Disable：禁用预取缓冲区。</li>
+</ul>
+</li>
+</ol>
+</blockquote>
+<p>这些函数可以根据需要在初始化阶段或运行时阶段调用，以配置Flash存储器的访问性能和优化选项。具体使用哪些函数以及参数取决于系统要求和性能需求。</p>
+<h1 id="STM32的FLASH如何进行编程（库函数样例）"><a href="#STM32的FLASH如何进行编程（库函数样例）" class="headerlink" title="STM32的FLASH如何进行编程（库函数样例）"></a>STM32的FLASH如何进行编程（库函数样例）</h1><pre class="line-numbers language-none"><code class="language-none">int main(void)
+&#123;
+  &#x2F;*!&lt; At this stage the microcontroller clock setting is already configured, 
+       this is done through SystemInit() function which is called from startup
+       file (startup_stm32f10x_xx.s) before to branch to application main.
+       To reconfigure the default setting of SystemInit() function, refer to
+       system_stm32f10x.c file
+     *&#x2F;
+
+&#x2F;* Porgram FLASH Bank1 ********************************************************&#x2F;
+  &#x2F;* Unlock the Flash Bank1 Program Erase controller *&#x2F;
+  FLASH_UnlockBank1();
+
+  &#x2F;* Define the number of page to be erased *&#x2F;
+  NbrOfPage &#x3D; (BANK1_WRITE_END_ADDR - BANK1_WRITE_START_ADDR) &#x2F; FLASH_PAGE_SIZE;
+
+  &#x2F;* Clear All pending flags *&#x2F;
+  FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPRTERR);	
+
+  &#x2F;* Erase the FLASH pages *&#x2F;
+  for(EraseCounter &#x3D; 0; (EraseCounter &lt; NbrOfPage) &amp;&amp; (FLASHStatus &#x3D;&#x3D; FLASH_COMPLETE); EraseCounter++)
+  &#123;
+    FLASHStatus &#x3D; FLASH_ErasePage(BANK1_WRITE_START_ADDR + (FLASH_PAGE_SIZE * EraseCounter));
+  &#125;
+  
+  &#x2F;* Program Flash Bank1 *&#x2F;
+  Address &#x3D; BANK1_WRITE_START_ADDR;
+
+  while((Address &lt; BANK1_WRITE_END_ADDR) &amp;&amp; (FLASHStatus &#x3D;&#x3D; FLASH_COMPLETE))
+  &#123;
+    FLASHStatus &#x3D; FLASH_ProgramWord(Address, Data);
+    Address &#x3D; Address + 4;
+  &#125;
+
+  FLASH_LockBank1();
+  
+  &#x2F;* Check the correctness of written data *&#x2F;
+  Address &#x3D; BANK1_WRITE_START_ADDR;
+
+  while((Address &lt; BANK1_WRITE_END_ADDR) &amp;&amp; (MemoryProgramStatus !&#x3D; FAILED))
+  &#123;
+    if((*(__IO uint32_t*) Address) !&#x3D; Data)
+    &#123;
+      MemoryProgramStatus &#x3D; FAILED;
+    &#125;
+    Address +&#x3D; 4;
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这段代码展示了一个主函数的示例，其中包含了对Flash的擦除、编程和数据验证操作。以下是对每个步骤的解释：</p>
+<blockquote>
+<ol>
+<li>对系统进行初始化：在main函数之前，通过调用SystemInit()函数来配置微控制器的时钟设置和其他系统初始化。可以在system_stm32f10x.c文件中重新配置SystemInit()函数的默认设置。</li>
+<li>解锁Flash Bank1：调用FLASH_UnlockBank1()函数来解锁Flash Bank1的编程和擦除控制器，允许对其进行操作。</li>
+<li>计算需要擦除的页数：通过计算Flash可编程区域的起始地址和结束地址之间的页数，得到需要擦除的页数。每页的大小由FLASH_PAGE_SIZE定义。</li>
+<li>清除标志位：调用FLASH_ClearFlag()函数来清除Flash的待处理标志位，包括操作结束标志位(EOP)、编程错误标志位(PGERR)和写保护错误标志位(WRPRTERR)。</li>
+<li>擦除Flash页：使用循环结构，调用FLASH_ErasePage()函数来逐页擦除Flash。循环会检查擦除操作的状态，并在满足条件时继续进行下一页的擦除。</li>
+<li>编程Flash：使用循环结构，调用FLASH_ProgramWord()函数来逐字编程Flash。循环会检查编程操作的状态，并在满足条件时继续进行下一个地址的编程。</li>
+<li>加锁Flash Bank1：调用FLASH_LockBank1()函数来锁定Flash Bank1，防止进一步的编程和擦除操作。</li>
+<li>验证数据的正确性：使用循环结构，通过读取Flash中的数据与预期的数据进行比较，来验证数据的正确性。如果发现不一致的数据，则将MemoryProgramStatus标记为FAILED。</li>
+</ol>
+</blockquote>
+<p>这段代码展示了如何在主函数中执行Flash的擦除、编程和数据验证操作。在实际应用中，需要根据具体的需求和硬件配置进行相应的调整和错误处理。</p>
+<h1 id="在STM32F103C8T6上进行验证"><a href="#在STM32F103C8T6上进行验证" class="headerlink" title="在STM32F103C8T6上进行验证"></a>在STM32F103C8T6上进行验证</h1><pre class="line-numbers language-none"><code class="language-none">#define STM32PAGESIZE 			1024  &#x2F;&#x2F;	一个页的字节数是1K
+
+&#x2F;&#x2F;写数据到FLASH中并加上校验
+uint8_t STM32Flash_SaveParm(uint32_t Addr,uint8_t *pdata,uint16_t len)
+&#123;
+	uint16_t i&#x3D;0,Page;
+	uint32_t tmpAddr,tmplen,Sum&#x3D;0;
+	if(Addr%4)
+		return0;
+	FLASH_Unlock();
+	FLASH_ClearFlag(FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPRTERR);
+	tmpAddr &#x3D; Addr-Addr%STM32PAGESIZE;
+	if(Addr%STM32PAGESIZE)
+	&#123;
+		tmplen &#x3D; len+Addr%STM32PAGESIZE-STM32PAGESIZE;
+		Page   &#x3D; 1;
+	&#125;
+	else
+	&#123;
+		tmplen &#x3D; len;
+		Page   &#x3D; 0;
+	&#125;
+	Page +&#x3D; tmplen&#x2F;STM32PAGESIZE;
+	if(tmplen%STM32PAGESIZE)
+		Page++;
+	for(i&#x3D;0;i&lt;Page;i++)	
+		FLASH_ErasePage(tmpAddr+i*STM32PAGESIZE);
+	for(i&#x3D;0;i&lt;len;i++)
+		Sum+&#x3D;pdata[i];
+	for(i&#x3D;0;i&lt;len&#x2F;4;i++)
+	&#123;
+		FLASH_ProgramWord(Addr, *(uint32_t*)pdata);
+		pdata +&#x3D;4;
+		Addr  +&#x3D;4;
+	&#125;
+	if(len%4)
+	&#123;
+		uint8_t buf[4]&#x3D;&#123;0&#125;,j;
+		for(j&#x3D;0;j&lt;len%4;j++)         
+			buf[j]&#x3D;*pdata++;	
+		FLASH_ProgramWord(Addr, *(uint32_t*)buf);
+		Addr+&#x3D;4;
+	&#125;
+	FLASH_ProgramWord(Addr, Sum);
+	FLASH_Lock();
+	return0;
+&#125;
+
+&#x2F;&#x2F;读数据从FLASH中并计算校验
+uint8_t STM32Flash_ReadParm(uint32_t Addr,uint8_t *pdata,uint16_t len)
+&#123;
+	uint16_t i;
+	uint32_t Sum&#x3D;0;
+	uint8_t *qdata&#x3D;pdata;
+	if(Addr%4)
+		return0;
+	for(i&#x3D;0;i&lt;len&#x2F;4;i++)
+	&#123;
+		*(uint32_t*)pdata&#x3D;*(uint32_t*)Addr;
+		Addr+&#x3D;4;
+		pdata+&#x3D;4;
+	&#125;
+	if(len%4)
+	&#123;
+		uint8_t buf[4]&#x3D;&#123;0&#125;;
+		*(uint32_t*)buf&#x3D;*(uint32_t*)Addr;
+		Addr+&#x3D;4;
+		for(i&#x3D;0;i&lt;len%4;i++)
+			*pdata++&#x3D;buf[i];
+	&#125;
+	for(i&#x3D;0;i&lt;len;i++)
+		Sum+&#x3D;(*qdata++);
+	if(Sum!&#x3D;*(uint32_t*)Addr)
+	&#123;
+		return1;
+	&#125;
+	return0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><blockquote>
+<p>FLASH的读写在IAP或者OTA以及fatfs上有很重要的应用，这篇文章就先记录这么多，后面会考虑实现一个单片机给（F407）给另外一个单片机（F103）进行程序升级。对这一块儿感兴趣的朋友可以关注，最近关注我的朋友越来越多，我定期更新的动力也越来越足，争取尽快更新~</p>
+</blockquote>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">改变世界</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://axbx.gitee.io/20230627/flm_cmsis/STM32%E7%9A%84%E5%86%85%E9%83%A8FLASH%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%92%E5%88%86%E7%9A%84.html">https://axbx.gitee.io/20230627/flm_cmsis/STM32%E7%9A%84%E5%86%85%E9%83%A8FLASH%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%92%E5%88%86%E7%9A%84.html</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">改变世界</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/%E7%AE%97%E6%B3%95/">
+                                    <span class="chip bg-color">算法</span>
+                                </a>
+                            
+                                <a href="/tags/STM32/">
+                                    <span class="chip bg-color">STM32</span>
+                                </a>
+                            
+                                <a href="/tags/FLM/">
+                                    <span class="chip bg-color">FLM</span>
+                                </a>
+                            
+                                <a href="/tags/CMSIS-DAP/">
+                                    <span class="chip bg-color">CMSIS-DAP</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/images/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/images/wechatpay.jpg" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'ZoIIzRnqqmEF533l0omzuUor-gzGzoHsz',
+        appKey: 'l8xXEF6KiMHVKhqAMce6mduq',
+        serverURLs: 'https://zoiizrnq.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'true' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/20230628/datus_base/STM32%E6%96%87%E4%BB%B6%E5%BD%92%E6%A1%A3.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="STM32文件归档">
+                        
+                        <span class="card-title">STM32文件归档</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2023-06-28
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E6%96%87%E4%BB%B6%E5%BD%92%E6%A1%A3/" class="post-category">
+                                    文件归档
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%8E%9F%E5%88%9B/">
+                        <span class="chip bg-color">原创</span>
+                    </a>
+                    
+                    <a href="/tags/STM32/">
+                        <span class="chip bg-color">STM32</span>
+                    </a>
+                    
+                    <a href="/tags/%E6%9D%82%E8%B0%88%E9%97%B2%E8%AF%AD/">
+                        <span class="chip bg-color">杂谈闲语</span>
+                    </a>
+                    
+                    <a href="/tags/%E6%96%87%E4%BB%B6%E5%BD%92%E6%A1%A3/">
+                        <span class="chip bg-color">文件归档</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/20230602/learn_algorithm/FOC%E6%8E%A7%E5%88%B6%E7%AE%97%E6%B3%95%E8%AF%A6%E8%A7%A3.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="FOC控制算法详解">
+                        
+                        <span class="card-title">FOC控制算法详解</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-06-02
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" class="post-category">
+                                    学习笔记
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+                        <span class="chip bg-color">基础知识</span>
+                    </a>
+                    
+                    <a href="/tags/%E6%9C%BA%E7%94%B5%E6%8E%A7%E5%88%B6/">
+                        <span class="chip bg-color">机电控制</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE' || selection.getRangeAt(0).commonAncestorContainer.nodeName === 'CODE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 改变世界 的技术博客<br />'
+            + '文章作者: 改变世界<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism-tomorrow.js"></script>
+
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+        <link rel="stylesheet" href="/libs/aplayer/APlayer.min.css">
+<style>
+    .aplayer .aplayer-lrc p {
+        
+        display: none;
+        
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 16px !important;
+    }
+
+    .aplayer .aplayer-lrc p.aplayer-lrc-current {
+        
+        display: none;
+        
+        font-size: 15px;
+        color: #42b983;
+    }
+
+    
+    .aplayer.aplayer-fixed.aplayer-narrow .aplayer-body {
+        left: -66px !important;
+    }
+
+    .aplayer.aplayer-fixed.aplayer-narrow .aplayer-body:hover {
+        left: 0px !important;
+    }
+
+    
+</style>
+<div class="">
+    
+    <div class="row">
+        <meting-js class="col l8 offset-l2 m10 offset-m1 s12"
+                   server="tencent"
+                   type="album"
+                   id="002PcLq62TA34E"
+                   fixed='true'
+                   autoplay='false'
+                   theme='#42b983'
+                   loop='all'
+                   order='random'
+                   preload='auto'
+                   volume='0.7'
+                   list-folded='true'
+        >
+        </meting-js>
+    </div>
+</div>
+
+<script src="/libs/aplayer/APlayer.min.js"></script>
+<script src="/libs/aplayer/Meting.min.js"></script>
+
+    
+
+    <div class="container row center-align"
+         style="margin-bottom: 15px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2023</span>
+            
+            <a href="/about" target="_blank">改变世界</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            
+            <br>
+            
+            
+            
+                
+            
+            
+                <span id="busuanzi_container_site_pv">
+                &nbsp;|&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;
+                    <span id="busuanzi_value_site_pv" class="white-color"></span>
+            </span>
+            
+            
+                <span id="busuanzi_container_site_uv">
+                &nbsp;|&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;
+                    <span id="busuanzi_value_site_uv" class="white-color"></span>
+            </span>
+            
+            <br>
+
+            <!-- 运行天数提醒. -->
+            
+                <span id="sitetime"> Loading ...</span>
+                <script>
+                    var calcSiteTime = function () {
+                        var seconds = 1000;
+                        var minutes = seconds * 60;
+                        var hours = minutes * 60;
+                        var days = hours * 24;
+                        var years = days * 365;
+                        var today = new Date();
+                        var startYear = "2023";
+                        var startMonth = "5";
+                        var startDate = "08";
+                        var startHour = "0";
+                        var startMinute = "0";
+                        var startSecond = "0";
+                        var todayYear = today.getFullYear();
+                        var todayMonth = today.getMonth() + 1;
+                        var todayDate = today.getDate();
+                        var todayHour = today.getHours();
+                        var todayMinute = today.getMinutes();
+                        var todaySecond = today.getSeconds();
+                        var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
+                        var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                        var diff = t2 - t1;
+                        var diffYears = Math.floor(diff / years);
+                        var diffDays = Math.floor((diff / days) - diffYears * 365);
+
+                        // 区分是否有年份.
+                        var language = 'zh-CN';
+                        if (startYear === String(todayYear)) {
+                            document.getElementById("year").innerHTML = todayYear;
+                            var daysTip = 'This site has been running for ' + diffDays + ' days';
+                            if (language === 'zh-CN') {
+                                daysTip = '本站已运行 ' + diffDays + ' 天';
+                            } else if (language === 'zh-HK') {
+                                daysTip = '本站已運行 ' + diffDays + ' 天';
+                            }
+                            document.getElementById("sitetime").innerHTML = daysTip;
+                        } else {
+                            document.getElementById("year").innerHTML = startYear + " - " + todayYear;
+                            var yearsAndDaysTip = 'This site has been running for ' + diffYears + ' years and '
+                                + diffDays + ' days';
+                            if (language === 'zh-CN') {
+                                yearsAndDaysTip = '本站已运行 ' + diffYears + ' 年 ' + diffDays + ' 天';
+                            } else if (language === 'zh-HK') {
+                                yearsAndDaysTip = '本站已運行 ' + diffYears + ' 年 ' + diffDays + ' 天';
+                            }
+                            document.getElementById("sitetime").innerHTML = yearsAndDaysTip;
+                        }
+                    }
+
+                    calcSiteTime();
+                </script>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/ekongyun" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:351217023@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=351217023" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 351217023" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="/atom.xml" class="tooltipped" target="_blank" data-tooltip="RSS 订阅" data-position="top" data-delay="50">
+        <i class="fas fa-rss"></i>
+    </a>
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 白天和黑夜主题 -->
+<div class="stars-con">
+    <div id="stars"></div>
+    <div id="stars2"></div>
+    <div id="stars3"></div>  
+</div>
+
+<script>
+    function switchNightMode() {
+        $('<div class="Cuteen_DarkSky"><div class="Cuteen_DarkPlanet"></div></div>').appendTo($('body')),
+        setTimeout(function () {
+            $('body').hasClass('DarkMode') 
+            ? ($('body').removeClass('DarkMode'), localStorage.setItem('isDark', '0'), $('#sum-moon-icon').removeClass("fa-sun").addClass('fa-moon')) 
+            : ($('body').addClass('DarkMode'), localStorage.setItem('isDark', '1'), $('#sum-moon-icon').addClass("fa-sun").removeClass('fa-moon')),
+            
+            setTimeout(function () {
+            $('.Cuteen_DarkSky').fadeOut(1e3, function () {
+                $(this).remove()
+            })
+            }, 2e3)
+        })
+    }
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    
+
+    
+    
+    
+
+    <!-- 雪花特效 -->
+     
+        <script type="text/javascript">
+            // 只在桌面版网页启用特效
+            var windowWidth = $(window).width();
+            if (windowWidth > 768) {
+                document.write('<script type="text/javascript" src="/libs/others/snow.js"><\/script>');
+            }
+        </script>
+    
+
+    <!-- 鼠标星星特效 -->
+    
+
+     
+        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
+        <script src="/libs/others/TencentCaptcha.js"></script>
+        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
+    
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+    <!--腾讯兔小巢-->
+    
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>

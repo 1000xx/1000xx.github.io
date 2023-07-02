@@ -1,0 +1,2312 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="P2P之UDP穿透NAT的原理与实现, 改变世界 的技术博客">
+    <meta name="description" content="日期：2004-5-25出处：P2P中国(PPcn.net)作者：shootingstars (有容乃大，无欲则刚)
+论坛上经常有对P2P原理的讨论，但是讨论归讨论，很少有实质的东西产生（源代码）。呵呵，在这里我就用自己实现的一个源代码来说">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>P2P之UDP穿透NAT的原理与实现 | 改变世界 的技术博客</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    
+    <style>
+        body{
+            background-image: url(https://cdn.jsdelivr.net/gh/Tokisaki-Galaxy/res/site/medias/background.jpg);
+            background-repeat:no-repeat;
+            background-size: 100% 100%;
+            background-attachment:fixed;
+        }
+    </style>
+
+
+
+    <!-- bg-cover style     -->
+
+
+
+<link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+<link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+<link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+<link rel="stylesheet" type="text/css" href="/css/matery.css">
+<link rel="stylesheet" type="text/css" href="/css/my.css">
+<link rel="stylesheet" type="text/css" href="/css/dark.css" media="none" onload="if(media!='all')media='all'">
+
+
+
+
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+    <link rel="stylesheet" href="/css/post.css">
+
+
+
+
+    
+        <link rel="stylesheet" type="text/css" href="/css/reward.css">
+    
+
+
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+</head>
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/logo.png" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">改变世界 的技术博客</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/contact" class="waves-effect waves-light">
+      
+      <i class="fas fa-comments" style="zoom: 0.6;"></i>
+      
+      <span>留言板</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="" class="waves-effect waves-light">
+
+      
+      <i class="fas fa-list" style="zoom: 0.6;"></i>
+      
+      <span>更多</span>
+      <i class="fas fa-chevron-down" aria-hidden="true" style="zoom: 0.6;"></i>
+    </a>
+    <ul class="sub-nav menus_item_child ">
+      
+      <li>
+        <a href="/about">
+          
+          <i class="fas fa-user-circle" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>关于</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/friends">
+          
+          <i class="fas fa-address-book" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>友情链接</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+  <li>
+    <a href="javascript:;" class="waves-effect waves-light" onclick="switchNightMode()" title="深色/浅色模式" >
+      <i id="sum-moon-icon" class="fas fa-sun" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">改变世界 的技术博客</div>
+        <div class="logo-desc">
+            
+            专注于单片机开发，反汇编。无源码改功能、改LOGO、升级驱动。现居长沙, 18676693732!
+            
+        </div>
+    </div>
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/contact" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-comments"></i>
+			
+			留言板
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="javascript:;">
+			
+				<i class="fa-fw fas fa-list"></i>
+			
+			更多
+			<span class="m-icon"><i class="fas fa-chevron-right"></i></span>
+		</a>
+            <ul  style="background:  ;" >
+              
+                <li>
+
+                  <a href="/about " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-user-circle" style="position: absolute;left:50px" ></i>
+			      
+		          <span>About</span>
+                  </a>
+                </li>
+              
+                <li>
+
+                  <a href="/friends " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-address-book" style="position: absolute;left:50px" ></i>
+			      
+		          <span>Friends</span>
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/blinkfox/hexo-theme-matery" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/blinkfox/hexo-theme-matery" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+<script src="/libs/cryptojs/crypto-js.min.js"></script>
+<script>
+    (function() {
+        let pwd = '';
+        if (pwd && pwd.length > 0) {
+            if (pwd !== CryptoJS.SHA256(prompt('请输入访问本文章的密码')).toString(CryptoJS.enc.Hex)) {
+                alert('密码错误，将返回主页！');
+                location.href = '/';
+            }
+        }
+    })();
+</script>
+
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/2.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">P2P之UDP穿透NAT的原理与实现</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <div class="row">
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+                                <span class="chip bg-color">基础知识</span>
+                            </a>
+                        
+                            <a href="/tags/%E7%AE%97%E6%B3%95/">
+                                <span class="chip bg-color">算法</span>
+                            </a>
+                        
+                            <a href="/tags/%E7%BD%91%E7%BB%9C%E7%A9%BF%E9%80%8F/">
+                                <span class="chip bg-color">网络穿透</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" class="post-category">
+                                学习笔记
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2023-06-01
+                </div>
+                
+
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                    26 分
+                </div>
+                
+
+                
+                    <div id="busuanzi_container_page_pv" class="info-break-policy">
+                        <i class="far fa-eye fa-fw"></i>阅读次数:&nbsp;&nbsp;
+                        <span id="busuanzi_value_page_pv"></span>
+                    </div>
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism-tomorrow.css">
+        
+
+        
+        <!-- 代码块折行 -->
+        <style type="text/css">
+            code[class*="language-"], pre[class*="language-"] { white-space: pre-wrap !important; }
+        </style>
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p>日期：2004-5-25<br>出处：P2P中国(PPcn.net)<br>作者：shootingstars (有容乃大，无欲则刚)</p>
+<p>论坛上经常有对P2P原理的讨论，但是讨论归讨论，很少有实质的东西产生（源代码）。呵呵，在这里我就用自己实现的一个源代码来说明UDP穿越NAT的原理。</p>
+<h1 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h1><p>NAT(Network Address Translators)，网络地址转换：网络地址转换是在IP地址日益缺乏的情况下产生的，它的主要目的就是为了能够地址重用。NAT分为两大类，基本的NAT和NAPT(Network Address/Port Translator)。<br>最开始NAT是运行在路由器上的一个功能模块。</p>
+<h1 id="穿透流程"><a href="#穿透流程" class="headerlink" title="穿透流程"></a>穿透流程</h1><p><img src="/images/learn/nathole/sp_sZnWg_eN3LoFB9lvXxg_006.jpg" alt="图片"> </p>
+<p>最先提出的是基本的NAT，它的产生基于如下事实：一个私有网络（域）中的节点中只有很少的节点需要与外网连接（呵呵，这是在上世纪90年代中期提出的）。那么这个子网中其实只有少数的节点需要全球唯一的IP地址，其他的节点的IP地址应该是可以重用的。<br>因此，基本的NAT实现的功能很简单，在子网内使用一个保留的IP子网段，这些IP对外是不可见的。子网内只有少数一些IP地址可以对应到真正全球唯一的IP地址。如果这些节点需要访问外部网络，那么基本NAT就负责将这个节点的子网内IP转化为一个全球唯一的IP然后发送出去。(基本的NAT会改变IP包中的原IP地址，但是不会改变IP包中的端口)关于基本的NAT可以参看RFC 1631</p>
+<p>另外一种NAT叫做NAPT，从名称上我们也可以看得出，NAPT不但会改变经过这个NAT设备的IP数据报的IP地址，还会改变IP数据报的TCP/UDP端口。基本NAT的设备可能我们见的不多（呵呵，我没有见到过），NAPT才是我们真正讨论的主角。看下图：<br><img src="/images/learn/nathole/sp_sZnWg_eN3LoFB9lvXxg_001.png" alt="图片"></p>
+<p>有一个私有网络10.<em>.</em>.*，Client A是其中的一台计算机，这个网络的网关（一个NAT设备）的外网IP是155.99.25.11(应该还有一个内网的IP地址，比如10.0.0.10)。如果Client A中的某个进程（这个进程创建了一个UDP Socket,这个Socket绑定1234端口）想访问外网主机18.181.0.31的1235端口，那么当数据包通过NAT时会发生什么事情呢？<br>首先NAT会改变这个数据包的原IP地址，改为155.99.25.11。接着NAT会为这个传输创建一个Session（Session是一个抽象的概念，如果是TCP，也许Session是由一个SYN包开始，以一个FIN包结束。而UDP呢，以这个IP的这个端口的第一个UDP开始，结束呢，呵呵，也许是几分钟，也许是几小时，这要看具体的实现了）并且给这个Session分配一个端口，比如62000，然后改变这个数据包的源端口为62000。所以本来是（10.0.0.1:1234-&gt;18.181.0.31:1235）的数据包到了互联网上变为了（155.99.25.11:62000-&gt;18.181.0.31:1235）。<br>一旦NAT创建了一个Session后，NAT会记住62000端口对应的是10.0.0.1的1234端口，以后从18.181.0.31发送到62000端口的数据会被NAT自动的转发到10.0.0.1上。（注意：这里是说18.181.0.31发送到62000端口的数据会被转发，其他的IP发送到这个端口的数据将被NAT抛弃）这样Client A就与Server S1建立以了一个连接。<br>呵呵，上面的基础知识可能很多人都知道了，那么下面是关键的部分了。</p>
+<p>看看下面的情况：</p>
+<pre class="line-numbers language-none"><code class="language-none">   Server S1                                     Server S2
+18.181.0.31:1235                              138.76.29.7:1235
+       |                                             |
+       |                                             |
+       +----------------------+----------------------+
+                              |
+  ^  Session 1 (A-S1)  ^      |      ^  Session 2 (A-S2)  ^
+  |  18.181.0.31:1235  |      |      |  138.76.29.7:1235  |
+  v 155.99.25.11:62000 v      |      v 155.99.25.11:62000 v
+                              |
+                           Cone NAT
+                         155.99.25.11
+                              |
+  ^  Session 1 (A-S1)  ^      |      ^  Session 2 (A-S2)  ^
+  |  18.181.0.31:1235  |      |      |  138.76.29.7:1235  |
+  v   10.0.0.1:1234    v      |      v   10.0.0.1:1234    v
+                              |
+                           Client A
+                        10.0.0.1:1234<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>接上面的例子，如果Client A的原来那个Socket(绑定了1234端口的那个UDP Socket)又接着向另外一个Server S2发送了一个UDP包，那么这个UDP包在通过NAT时会怎么样呢？<br>这时可能会有两种情况发生，一种是NAT再次创建一个Session，并且再次为这个Session分配一个端口号（比如：62001）。另外一种是NAT再次创建一个Session，但是不会新分配一个端口号，而是用原来分配的端口号62000。前一种NAT叫做Symmetric NAT，后一种叫做Cone NAT。我们期望我们的NAT是第二种，呵呵，如果你的NAT刚好是第一种，那么很可能会有很多P2P软件失灵。（可以庆幸的是，现在绝大多数的NAT属于后者，即Cone NAT）<br>好了，我们看到，通过NAT,子网内的计算机向外连结是很容易的（NAT相当于透明的，子网内的和外网的计算机不用知道NAT的情况）。<br>但是如果外部的计算机想访问子网内的计算机就比较困难了（而这正是P2P所需要的）。<br>那么我们如果想从外部发送一个数据报给内网的计算机有什么办法呢？首先，我们必须在内网的NAT上打上一个“洞”（也就是前面我们说的在NAT上建立一个Session），这个洞不能由外部来打，只能由内网内的主机来打。而且这个洞是有方向的，比如从内部某台主机（比如：192.168.0.10）向外部的某个IP(比如：219.237.60.1)发送一个UDP包，那么就在这个内网的NAT设备上打了一个方向为219.237.60.1的“洞”，（这就是称为UDP Hole Punching的技术）以后219.237.60.1就可以通过这个洞与内网的192.168.0.10联系了。（但是其他的IP不能利用这个洞）。<br>呵呵，现在该轮到我们的正题P2P了。有了上面的理论，实现两个内网的主机通讯就差最后一步了：那就是鸡生蛋还是蛋生鸡的问题了，两边都无法主动发出连接请求，谁也不知道谁的公网地址，那我们如何来打这个洞呢？我们需要一个中间人来联系这两个内网主机。<br>现在我们来看看一个P2P软件的流程，以下图为例：<br><img src="/images/learn/nathole/sp_sZnWg_eN3LoFB9lvXxg_007.png" alt="图片"> </p>
+<p>首先，Client A登录服务器，NAT A为这次的Session分配了一个端口60000，那么Server S收到的Client A的地址是202.187.45.3:60000，这就是Client A的外网地址了。同样，Client B登录Server S，NAT B给此次Session分配的端口是40000，那么Server S收到的B的地址是187.34.1.56:40000。<br>此时，Client A与Client B都可以与Server S通信了。如果Client A此时想直接发送信息给Client B，那么他可以从Server S那儿获得B的公网地址187.34.1.56:40000，是不是Client A向这个地址发送信息Client B就能收到了呢？答案是不行，因为如果这样发送信息，NAT B会将这个信息丢弃（因为这样的信息是不请自来的，为了安全，大多数NAT都会执行丢弃动作）。现在我们需要的是在NAT B上打一个方向为202.187.45.3（即Client A的外网地址）的洞，那么Client A发送到187.34.1.56:40000的信息,Client B就能收到了。这个打洞命令由谁来发呢，呵呵，当然是Server S。<br>总结一下这个过程：如果Client A想向Client B发送信息，那么Client A发送命令给Server S，请求Server S命令Client B向Client A方向打洞。呵呵，是不是很绕口，不过没关系，想一想就很清楚了，何况还有源代码呢（侯老师说过：在源代码面前没有秘密 8）），然后Client A就可以通过Client B的外网地址与Client B通信了。</p>
+<p>注意：以上过程只适合于Cone NAT的情况，如果是Symmetric NAT，那么当Client B向Client A打洞的端口已经重新分配了，Client B将无法知道这个端口（如果Symmetric NAT的端口是顺序分配的，那么我们或许可以猜测这个端口号，可是由于可能导致失败的因素太多，我们不推荐这种猜测端口的方法）。</p>
+<h1 id="参考源代码"><a href="#参考源代码" class="headerlink" title="参考源代码"></a>参考源代码</h1><p>下面是一个模拟P2P聊天的过程的源代码，过程很简单，P2PServer运行在一个拥有公网IP的计算机上，P2PClient运行在两个不同的NAT后（注意，如果两个客户端运行在一个NAT后，本程序很可能不能运行正常，这取决于你的NAT是否支持loopback translation，详见<code>http://midcom-p2p.sourceforge.net/draft-ford-midcom-p2p-01.txt</code>，当然，此问题可以通过双方先尝试连接对方的内网IP来解决，但是这个代码只是为了验证原理，并没有处理这些问题），后登录的计算机可以获得先登录计算机的用户名，后登录的计算机通过send username message的格式来发送消息。如果发送成功，说明你已取得了直接与对方连接的成功。<br>程序现在支持三个命令：send , getu , exit</p>
+<h2 id="lt-send-gt-命令"><a href="#lt-send-gt-命令" class="headerlink" title="&lt;send&gt; 命令"></a>&lt;send&gt; 命令</h2><p>格式：send username message<br>功能：发送信息给username</p>
+<h2 id="lt-getu-gt-命令"><a href="#lt-getu-gt-命令" class="headerlink" title="&lt;getu&gt; 命令"></a>&lt;getu&gt; 命令</h2><p>格式：getu<br>功能：获得当前服务器用户列表</p>
+<h2 id="lt-exit-gt-命令"><a href="#lt-exit-gt-命令" class="headerlink" title="&lt;exit&gt; 命令"></a>&lt;exit&gt; 命令</h2><p>格式：exit<br>功能：注销与服务器的连接（服务器不会自动监测客户是否吊线）</p>
+<p>代码很短，相信很容易懂，如果有什么问题，可以给我发邮件<a href="mailto:&#122;&#x68;&#111;&#117;&#x68;&#117;&#105;&#115;&#x32;&#x32;&#x40;&#115;&#x69;&#x6e;&#x61;&#46;&#99;&#111;&#109;">&#122;&#x68;&#111;&#117;&#x68;&#117;&#105;&#115;&#x32;&#x32;&#x40;&#115;&#x69;&#x6e;&#x61;&#46;&#99;&#111;&#109;</a>  或者在CSDN上发送短消息。同时，欢迎转发此文，但希望保留作者版权8-）。</p>
+<p>最后感谢CSDN网友 PiggyXP 和 Seilfer的测试帮助</p>
+<h2 id="服务端源代码"><a href="#服务端源代码" class="headerlink" title="服务端源代码"></a>服务端源代码</h2><pre class="line-numbers language-none"><code class="language-none">&#x2F;* P2P 程序服务端
+ * 
+ * 文件名：P2PServer.c
+ *
+ * 日期：2004-5-21
+ *
+ * 作者：shootingstars(zhouhuis22@sina.com)
+ *
+ *&#x2F;
+#pragma comment(lib, &quot;ws2_32.lib&quot;)
+
+#include &quot;windows.h&quot;
+#include &quot;..\proto.h&quot;
+#include &quot;..\Exception.h&quot;
+
+UserList ClientList;
+
+void InitWinSock()
+&#123;
+ WSADATA wsaData;
+
+ if (WSAStartup(MAKEWORD(2, 2), &amp;wsaData) !&#x3D; 0)
+ &#123;
+  printf(&quot;Windows sockets 2.2 startup&quot;);
+  throw Exception(&quot;&quot;);
+ &#125;
+ else&#123;
+  printf(&quot;Using %s (Status: %s)\n&quot;,
+   wsaData.szDescription, wsaData.szSystemStatus);
+  printf(&quot;with API versions %d.%d to %d.%d\n\n&quot;,
+   LOBYTE(wsaData.wVersion), HIBYTE(wsaData.wVersion),
+   LOBYTE(wsaData.wHighVersion), HIBYTE(wsaData.wHighVersion));
+  
+ &#125;
+&#125;
+
+SOCKET mksock(int type)
+&#123;
+ SOCKET sock &#x3D; socket(AF_INET, type, 0);
+ if (sock &lt; 0)
+ &#123;
+        printf(&quot;create socket error&quot;);
+  throw Exception(&quot;&quot;);
+ &#125;
+ return sock;
+&#125;
+
+stUserListNode GetUser(char *username)
+&#123;
+ for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+      UserIterator!&#x3D;ClientList.end();
+       ++UserIterator)
+ &#123;
+  if( strcmp( ((*UserIterator)-&gt;userName), username) &#x3D;&#x3D; 0 )
+   return *(*UserIterator);
+ &#125;
+ throw Exception(&quot;not find this user&quot;);
+&#125;
+
+int main(int argc, char* argv[])
+&#123;
+ try&#123;
+  InitWinSock();
+  
+  SOCKET PrimaryUDP;
+  PrimaryUDP &#x3D; mksock(SOCK_DGRAM);
+
+  sockaddr_in local;
+  local.sin_family&#x3D;AF_INET;
+  local.sin_port&#x3D; htons(SERVER_PORT); 
+  local.sin_addr.s_addr &#x3D; htonl(INADDR_ANY);
+  int nResult&#x3D;bind(PrimaryUDP,(sockaddr*)&amp;local,sizeof(sockaddr));
+  if(nResult&#x3D;&#x3D;SOCKET_ERROR)
+   throw Exception(&quot;bind error&quot;);
+
+  sockaddr_in sender;
+  stMessage recvbuf;
+  memset(&amp;recvbuf,0,sizeof(stMessage));
+
+  &#x2F;&#x2F; 开始主循环.
+  &#x2F;&#x2F; 主循环负责下面几件事情:
+  &#x2F;&#x2F; 一:读取客户端登陆和登出消息,记录客户列表
+  &#x2F;&#x2F; 二:转发客户p2p请求
+  for(;;)
+  &#123;
+   int dwSender &#x3D; sizeof(sender);
+   int ret &#x3D; recvfrom(PrimaryUDP, (char *)&amp;recvbuf, sizeof(stMessage), 0, (sockaddr *)&amp;sender, &amp;dwSender);
+   if(ret &lt;&#x3D; 0)
+   &#123;
+    printf(&quot;recv error&quot;);
+    continue;
+   &#125;
+   else
+   &#123;
+    int messageType &#x3D; recvbuf.iMessageType;
+    switch(messageType)&#123;
+    case LOGIN:
+     &#123;
+      &#x2F;&#x2F;  将这个用户的信息记录到用户列表中
+      printf(&quot;has a user login : %s\n&quot;, recvbuf.message.loginmember.userName);
+      stUserListNode *currentuser &#x3D; new stUserListNode();
+      strcpy(currentuser-&gt;userName, recvbuf.message.loginmember.userName);
+      currentuser-&gt;ip &#x3D; ntohl(sender.sin_addr.S_un.S_addr);
+      currentuser-&gt;port &#x3D; ntohs(sender.sin_port);
+      
+      ClientList.push_back(currentuser);
+
+      &#x2F;&#x2F; 发送已经登陆的客户信息
+      int nodecount &#x3D; (int)ClientList.size();
+      sendto(PrimaryUDP, (const char*)&amp;nodecount, sizeof(int), 0, (const sockaddr*)&amp;sender, sizeof(sender));
+      for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+        UserIterator!&#x3D;ClientList.end();
+        ++UserIterator)
+      &#123;
+       sendto(PrimaryUDP, (const char*)(*UserIterator), sizeof(stUserListNode), 0, (const sockaddr*)&amp;sender, sizeof(sender)); 
+      &#125;
+
+      break;
+     &#125;
+    case LOGOUT:
+     &#123;
+      &#x2F;&#x2F; 将此客户信息删除
+      printf(&quot;has a user logout : %s\n&quot;, recvbuf.message.logoutmember.userName);
+      UserList::iterator removeiterator &#x3D; NULL;
+      for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+       UserIterator!&#x3D;ClientList.end();
+       ++UserIterator)
+      &#123;
+       if( strcmp( ((*UserIterator)-&gt;userName), recvbuf.message.logoutmember.userName) &#x3D;&#x3D; 0 )
+       &#123;
+        removeiterator &#x3D; UserIterator;
+        break;
+       &#125;
+      &#125;
+      if(removeiterator !&#x3D; NULL)
+       ClientList.remove(*removeiterator);
+      break;
+     &#125;
+    case P2PTRANS:
+     &#123;
+      &#x2F;&#x2F; 某个客户希望服务端向另外一个客户发送一个打洞消息
+      printf(&quot;%s wants to p2p %s\n&quot;,inet_ntoa(sender.sin_addr),recvbuf.message.translatemessage.userName);
+      stUserListNode node &#x3D; GetUser(recvbuf.message.translatemessage.userName);
+      sockaddr_in remote;
+      remote.sin_family&#x3D;AF_INET;
+      remote.sin_port&#x3D; htons(node.port); 
+      remote.sin_addr.s_addr &#x3D; htonl(node.ip);
+
+      in_addr tmp;
+      tmp.S_un.S_addr &#x3D; htonl(node.ip);
+      printf(&quot;the address is %s,and port is %d\n&quot;,inet_ntoa(tmp), node.port);
+
+      stP2PMessage transMessage;
+      transMessage.iMessageType &#x3D; P2PSOMEONEWANTTOCALLYOU;
+      transMessage.iStringLen &#x3D; ntohl(sender.sin_addr.S_un.S_addr);
+      transMessage.Port &#x3D; ntohs(sender.sin_port);
+                        
+      sendto(PrimaryUDP,(const char*)&amp;transMessage, sizeof(transMessage), 0, (const sockaddr *)&amp;remote, sizeof(remote));
+
+      break;
+     &#125;
+    
+    case GETALLUSER:
+     &#123;
+      int command &#x3D; GETALLUSER;
+      sendto(PrimaryUDP, (const char*)&amp;command, sizeof(int), 0, (const sockaddr*)&amp;sender, sizeof(sender));
+
+      int nodecount &#x3D; (int)ClientList.size();
+      sendto(PrimaryUDP, (const char*)&amp;nodecount, sizeof(int), 0, (const sockaddr*)&amp;sender, sizeof(sender));
+
+      for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+        UserIterator!&#x3D;ClientList.end();
+        ++UserIterator)
+      &#123;
+       sendto(PrimaryUDP, (const char*)(*UserIterator), sizeof(stUserListNode), 0, (const sockaddr*)&amp;sender, sizeof(sender)); 
+      &#125;
+      break;
+     &#125;
+    &#125;
+   &#125;
+  &#125;
+
+ &#125;
+ catch(Exception &amp;e)
+ &#123;
+  printf(e.GetMessage());
+  return 1;
+ &#125;
+
+ return 0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="客户端源代码"><a href="#客户端源代码" class="headerlink" title="客户端源代码"></a>客户端源代码</h2> <pre class="line-numbers language-none"><code class="language-none">&#x2F;* P2P 程序客户端
+ * 
+ * 文件名：P2PClient.c
+ *
+ * 日期：2004-5-21
+ *
+ * 作者：shootingstars(zhouhuis22@sina.com)
+ *
+ *&#x2F;
+
+#pragma comment(lib,&quot;ws2_32.lib&quot;)
+
+#include &quot;windows.h&quot;
+#include &quot;..\proto.h&quot;
+#include &quot;..\Exception.h&quot;
+#include &lt;iostream&gt;
+using namespace std;
+
+UserList ClientList;
+
+
+
+#define COMMANDMAXC 256
+#define MAXRETRY    5
+
+SOCKET PrimaryUDP;
+char UserName[10];
+char ServerIP[20];
+
+bool RecvedACK;
+
+void InitWinSock()
+&#123;
+ WSADATA wsaData;
+
+ if (WSAStartup(MAKEWORD(2, 2), &amp;wsaData) !&#x3D; 0)
+ &#123;
+  printf(&quot;Windows sockets 2.2 startup&quot;);
+  throw Exception(&quot;&quot;);
+ &#125;
+ else&#123;
+  printf(&quot;Using %s (Status: %s)\n&quot;,
+   wsaData.szDescription, wsaData.szSystemStatus);
+  printf(&quot;with API versions %d.%d to %d.%d\n\n&quot;,
+   LOBYTE(wsaData.wVersion), HIBYTE(wsaData.wVersion),
+   LOBYTE(wsaData.wHighVersion), HIBYTE(wsaData.wHighVersion));
+ &#125;
+&#125;
+
+SOCKET mksock(int type)
+&#123;
+ SOCKET sock &#x3D; socket(AF_INET, type, 0);
+ if (sock &lt; 0)
+ &#123;
+        printf(&quot;create socket error&quot;);
+  throw Exception(&quot;&quot;);
+ &#125;
+ return sock;
+&#125;
+
+stUserListNode GetUser(char *username)
+&#123;
+ for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+      UserIterator!&#x3D;ClientList.end();
+       ++UserIterator)
+ &#123;
+  if( strcmp( ((*UserIterator)-&gt;userName), username) &#x3D;&#x3D; 0 )
+   return *(*UserIterator);
+ &#125;
+ throw Exception(&quot;not find this user&quot;);
+&#125;
+
+void BindSock(SOCKET sock)
+&#123;
+ sockaddr_in sin;
+ sin.sin_addr.S_un.S_addr &#x3D; INADDR_ANY;
+ sin.sin_family &#x3D; AF_INET;
+ sin.sin_port &#x3D; 0;
+ 
+ if (bind(sock, (struct sockaddr*)&amp;sin, sizeof(sin)) &lt; 0)
+  throw Exception(&quot;bind error&quot;);
+&#125;
+
+void ConnectToServer(SOCKET sock,char *username, char *serverip)
+&#123;
+ sockaddr_in remote;
+ remote.sin_addr.S_un.S_addr &#x3D; inet_addr(serverip);
+ remote.sin_family &#x3D; AF_INET;
+ remote.sin_port &#x3D; htons(SERVER_PORT);
+ 
+ stMessage sendbuf;
+ sendbuf.iMessageType &#x3D; LOGIN;
+ strncpy(sendbuf.message.loginmember.userName, username, 10);
+
+ sendto(sock, (const char*)&amp;sendbuf, sizeof(sendbuf), 0, (const sockaddr*)&amp;remote,sizeof(remote));
+
+ int usercount;
+ int fromlen &#x3D; sizeof(remote);
+ int iread &#x3D; recvfrom(sock, (char *)&amp;usercount, sizeof(int), 0, (sockaddr *)&amp;remote, &amp;fromlen);
+ if(iread&lt;&#x3D;0)
+ &#123;
+  throw Exception(&quot;Login error\n&quot;);
+ &#125;
+
+ &#x2F;&#x2F; 登录到服务端后，接收服务端发来的已经登录的用户的信息
+ cout&lt;&lt;&quot;Have &quot;&lt;&lt;usercount&lt;&lt;&quot; users logined server:&quot;&lt;&lt;endl;
+ for(int i &#x3D; 0;i&lt;usercount;i++)
+ &#123;
+  stUserListNode *node &#x3D; new stUserListNode;
+  recvfrom(sock, (char*)node, sizeof(stUserListNode), 0, (sockaddr *)&amp;remote, &amp;fromlen);
+  ClientList.push_back(node);
+  cout&lt;&lt;&quot;Username:&quot;&lt;&lt;node-&gt;userName&lt;&lt;endl;
+  in_addr tmp;
+  tmp.S_un.S_addr &#x3D; htonl(node-&gt;ip);
+  cout&lt;&lt;&quot;UserIP:&quot;&lt;&lt;inet_ntoa(tmp)&lt;&lt;endl;
+  cout&lt;&lt;&quot;UserPort:&quot;&lt;&lt;node-&gt;port&lt;&lt;endl;
+  cout&lt;&lt;&quot;&quot;&lt;&lt;endl;
+ &#125;
+&#125;
+
+void OutputUsage()
+&#123;
+ cout&lt;&lt;&quot;You can input you command:\n&quot;
+  &lt;&lt;&quot;Command Type:\&quot;send\&quot;,\&quot;exit\&quot;,\&quot;getu\&quot;\n&quot;
+  &lt;&lt;&quot;Example : send Username Message\n&quot;
+  &lt;&lt;&quot;          exit\n&quot;
+  &lt;&lt;&quot;          getu\n&quot;
+  &lt;&lt;endl;
+&#125;
+
+
+&#x2F;* 这是主要的函数：发送一个消息给某个用户(C)
+ *流程：直接向某个用户的外网IP发送消息，如果此前没有联系过
+ *      那么此消息将无法发送，发送端等待超时。
+ *      超时后，发送端将发送一个请求信息到服务端，
+ *      要求服务端发送给客户C一个请求，请求C给本机发送打洞消息
+ *      以上流程将重复MAXRETRY次
+ *&#x2F;
+bool SendMessageTo(char *UserName, char *Message)
+&#123;
+ char realmessage[256];
+ unsigned int UserIP;
+ unsigned short UserPort;
+ bool FindUser &#x3D; false;
+ for(UserList::iterator UserIterator&#x3D;ClientList.begin();
+      UserIterator!&#x3D;ClientList.end();
+      ++UserIterator)
+ &#123;
+  if( strcmp( ((*UserIterator)-&gt;userName), UserName) &#x3D;&#x3D; 0 )
+  &#123;
+   UserIP &#x3D; (*UserIterator)-&gt;ip;
+   UserPort &#x3D; (*UserIterator)-&gt;port;
+   FindUser &#x3D; true;
+  &#125;
+ &#125;
+
+ if(!FindUser)
+  return false;
+
+ strcpy(realmessage, Message);
+ for(int i&#x3D;0;i&lt;MAXRETRY;i++)
+ &#123;
+  RecvedACK &#x3D; false;
+
+  sockaddr_in remote;
+  remote.sin_addr.S_un.S_addr &#x3D; htonl(UserIP);
+  remote.sin_family &#x3D; AF_INET;
+  remote.sin_port &#x3D; htons(UserPort);
+  stP2PMessage MessageHead;
+  MessageHead.iMessageType &#x3D; P2PMESSAGE;
+  MessageHead.iStringLen &#x3D; (int)strlen(realmessage)+1;
+  int isend &#x3D; sendto(PrimaryUDP, (const char *)&amp;MessageHead, sizeof(MessageHead), 0, (const sockaddr*)&amp;remote, sizeof(remote));
+  isend &#x3D; sendto(PrimaryUDP, (const char *)&amp;realmessage, MessageHead.iStringLen, 0, (const sockaddr*)&amp;remote, sizeof(remote));
+  
+  &#x2F;&#x2F; 等待接收线程将此标记修改
+  for(int j&#x3D;0;j&lt;10;j++)
+  &#123;
+   if(RecvedACK)
+    return true;
+   else
+    Sleep(300);
+  &#125;
+
+  &#x2F;&#x2F; 没有接收到目标主机的回应，认为目标主机的端口映射没有
+  &#x2F;&#x2F; 打开，那么发送请求信息给服务器，要服务器告诉目标主机
+  &#x2F;&#x2F; 打开映射端口（UDP打洞）
+  sockaddr_in server;
+  server.sin_addr.S_un.S_addr &#x3D; inet_addr(ServerIP);
+  server.sin_family &#x3D; AF_INET;
+  server.sin_port &#x3D; htons(SERVER_PORT);
+ 
+  stMessage transMessage;
+  transMessage.iMessageType &#x3D; P2PTRANS;
+  strcpy(transMessage.message.translatemessage.userName, UserName);
+
+  sendto(PrimaryUDP, (const char*)&amp;transMessage, sizeof(transMessage), 0, (const sockaddr*)&amp;server, sizeof(server));
+  Sleep(100);&#x2F;&#x2F; 等待对方先发送信息。
+ &#125;
+ return false;
+&#125;
+
+
+&#x2F;&#x2F; 解析命令，暂时只有exit和send命令
+&#x2F;&#x2F; 新增getu命令，获取当前服务器的所有用户
+void ParseCommand(char * CommandLine)
+&#123;
+ if(strlen(CommandLine)&lt;4)
+  return;
+ char Command[10];
+ strncpy(Command, CommandLine, 4);
+ Command[4]&#x3D;&#39;\0&#39;;
+
+ if(strcmp(Command,&quot;exit&quot;)&#x3D;&#x3D;0)
+ &#123;
+  stMessage sendbuf;
+  sendbuf.iMessageType &#x3D; LOGOUT;
+  strncpy(sendbuf.message.logoutmember.userName, UserName, 10);
+  sockaddr_in server;
+  server.sin_addr.S_un.S_addr &#x3D; inet_addr(ServerIP);
+  server.sin_family &#x3D; AF_INET;
+  server.sin_port &#x3D; htons(SERVER_PORT);
+
+  sendto(PrimaryUDP,(const char*)&amp;sendbuf, sizeof(sendbuf), 0, (const sockaddr *)&amp;server, sizeof(server));
+  shutdown(PrimaryUDP, 2);
+  closesocket(PrimaryUDP);
+  exit(0);
+ &#125;
+ else if(strcmp(Command,&quot;send&quot;)&#x3D;&#x3D;0)
+ &#123;
+  char sendname[20];
+  char message[COMMANDMAXC];
+  int i;
+  for(i&#x3D;5;;i++)
+  &#123;
+   if(CommandLine[i]!&#x3D;&#39; &#39;)
+    sendname[i-5]&#x3D;CommandLine[i];
+   else
+   &#123;
+    sendname[i-5]&#x3D;&#39;\0&#39;;
+    break;
+   &#125;
+  &#125;
+  strcpy(message, &amp;(CommandLine[i+1]));
+  if(SendMessageTo(sendname, message))
+   printf(&quot;Send OK!\n&quot;);
+  else 
+   printf(&quot;Send Failure!\n&quot;);
+ &#125;
+ else if(strcmp(Command,&quot;getu&quot;)&#x3D;&#x3D;0)
+ &#123;
+  int command &#x3D; GETALLUSER;
+  sockaddr_in server;
+  server.sin_addr.S_un.S_addr &#x3D; inet_addr(ServerIP);
+  server.sin_family &#x3D; AF_INET;
+  server.sin_port &#x3D; htons(SERVER_PORT);
+
+  sendto(PrimaryUDP,(const char*)&amp;command, sizeof(command), 0, (const sockaddr *)&amp;server, sizeof(server));
+ &#125;
+&#125;
+
+&#x2F;&#x2F; 接受消息线程
+DWORD WINAPI RecvThreadProc(LPVOID lpParameter)
+&#123;
+ sockaddr_in remote;
+ int sinlen &#x3D; sizeof(remote);
+ stP2PMessage recvbuf;
+ for(;;)
+ &#123;
+  int iread &#x3D; recvfrom(PrimaryUDP, (char *)&amp;recvbuf, sizeof(recvbuf), 0, (sockaddr *)&amp;remote, &amp;sinlen);
+  if(iread&lt;&#x3D;0)
+  &#123;
+   printf(&quot;recv error\n&quot;);
+   continue;
+  &#125;
+  switch(recvbuf.iMessageType)
+  &#123;
+  case P2PMESSAGE:
+   &#123;
+    &#x2F;&#x2F; 接收到P2P的消息
+    char *comemessage&#x3D; new char[recvbuf.iStringLen];
+    int iread1 &#x3D; recvfrom(PrimaryUDP, comemessage, 256, 0, (sockaddr *)&amp;remote, &amp;sinlen);
+    comemessage[iread1-1] &#x3D; &#39;\0&#39;;
+    if(iread1&lt;&#x3D;0)
+     throw Exception(&quot;Recv Message Error\n&quot;);
+    else
+    &#123;
+     printf(&quot;Recv a Message:%s\n&quot;,comemessage);
+     
+     stP2PMessage sendbuf;
+     sendbuf.iMessageType &#x3D; P2PMESSAGEACK;
+     sendto(PrimaryUDP, (const char*)&amp;sendbuf, sizeof(sendbuf), 0, (const sockaddr*)&amp;remote, sizeof(remote));
+    &#125;
+
+    delete []comemessage;
+    break;
+
+   &#125;
+  case P2PSOMEONEWANTTOCALLYOU:
+   &#123;
+    &#x2F;&#x2F; 接收到打洞命令，向指定的IP地址打洞
+    printf(&quot;Recv p2someonewanttocallyou data\n&quot;);
+    sockaddr_in remote;
+    remote.sin_addr.S_un.S_addr &#x3D; htonl(recvbuf.iStringLen);
+    remote.sin_family &#x3D; AF_INET;
+    remote.sin_port &#x3D; htons(recvbuf.Port);
+
+    &#x2F;&#x2F; UDP hole punching
+    stP2PMessage message;
+    message.iMessageType &#x3D; P2PTRASH;
+    sendto(PrimaryUDP, (const char *)&amp;message, sizeof(message), 0, (const sockaddr*)&amp;remote, sizeof(remote));
+                
+    break;
+   &#125;
+  case P2PMESSAGEACK:
+   &#123;
+    &#x2F;&#x2F; 发送消息的应答
+    RecvedACK &#x3D; true;
+    break;
+   &#125;
+  case P2PTRASH:
+   &#123;
+    &#x2F;&#x2F; 对方发送的打洞消息，忽略掉。
+    &#x2F;&#x2F;do nothing  
+    printf(&quot;Recv p2ptrash data\n&quot;);
+    break;
+   &#125;
+  case GETALLUSER:
+   &#123;
+    int usercount;
+    int fromlen &#x3D; sizeof(remote);
+    int iread &#x3D; recvfrom(PrimaryUDP, (char *)&amp;usercount, sizeof(int), 0, (sockaddr *)&amp;remote, &amp;fromlen);
+    if(iread&lt;&#x3D;0)
+    &#123;
+     throw Exception(&quot;Login error\n&quot;);
+    &#125;
+    
+    ClientList.clear();
+
+    cout&lt;&lt;&quot;Have &quot;&lt;&lt;usercount&lt;&lt;&quot; users logined server:&quot;&lt;&lt;endl;
+    for(int i &#x3D; 0;i&lt;usercount;i++)
+    &#123;
+     stUserListNode *node &#x3D; new stUserListNode;
+     recvfrom(PrimaryUDP, (char*)node, sizeof(stUserListNode), 0, (sockaddr *)&amp;remote, &amp;fromlen);
+     ClientList.push_back(node);
+     cout&lt;&lt;&quot;Username:&quot;&lt;&lt;node-&gt;userName&lt;&lt;endl;
+     in_addr tmp;
+     tmp.S_un.S_addr &#x3D; htonl(node-&gt;ip);
+     cout&lt;&lt;&quot;UserIP:&quot;&lt;&lt;inet_ntoa(tmp)&lt;&lt;endl;
+     cout&lt;&lt;&quot;UserPort:&quot;&lt;&lt;node-&gt;port&lt;&lt;endl;
+     cout&lt;&lt;&quot;&quot;&lt;&lt;endl;
+    &#125;
+    break;
+   &#125;
+  &#125;
+ &#125;
+&#125;
+
+
+int main(int argc, char* argv[])
+&#123;
+ try
+ &#123;
+  InitWinSock();
+  
+  PrimaryUDP &#x3D; mksock(SOCK_DGRAM);
+  BindSock(PrimaryUDP);
+
+  cout&lt;&lt;&quot;Please input server ip:&quot;;
+  cin&gt;&gt;ServerIP;
+
+  cout&lt;&lt;&quot;Please input your name:&quot;;
+  cin&gt;&gt;UserName;
+
+  ConnectToServer(PrimaryUDP, UserName, ServerIP);
+
+  HANDLE threadhandle &#x3D; CreateThread(NULL, 0, RecvThreadProc, NULL, NULL, NULL);
+  CloseHandle(threadhandle);
+  OutputUsage();
+
+  for(;;)
+  &#123;
+   char Command[COMMANDMAXC];
+   gets(Command);
+   ParseCommand(Command);
+  &#125;
+ &#125;
+ catch(Exception &amp;e)
+ &#123;
+  printf(e.GetMessage());
+  return 1;
+ &#125;
+ return 0;
+&#125;
+
+
+&#x2F;* 异常类
+ *
+ * 文件名：Exception.h
+ *
+ * 日期：2004.5.5
+ *
+ * 作者：shootingstars(zhouhuis22@sina.com)
+ *&#x2F;
+
+#ifndef __HZH_Exception__
+#define __HZH_Exception__
+
+#define EXCEPTION_MESSAGE_MAXLEN 256
+#include &quot;string.h&quot;
+
+class Exception
+&#123;
+private:
+ char m_ExceptionMessage[EXCEPTION_MESSAGE_MAXLEN];
+public:
+ Exception(char *msg)
+ &#123;
+  strncpy(m_ExceptionMessage, msg, EXCEPTION_MESSAGE_MAXLEN);
+ &#125;
+
+ char *GetMessage()
+ &#123;
+  return m_ExceptionMessage;
+ &#125;
+&#125;;
+
+#endif
+
+
+&#x2F;* P2P 程序传输协议
+ * 
+ * 日期：2004-5-21
+ *
+ * 作者：shootingstars(zhouhuis22@sina.com)
+ *
+ *&#x2F;
+
+#pragma once
+#include &lt;list&gt;
+
+&#x2F;&#x2F; 定义iMessageType的值
+#define LOGIN 1
+#define LOGOUT 2
+#define P2PTRANS 3
+#define GETALLUSER  4
+
+&#x2F;&#x2F; 服务器端口
+#define SERVER_PORT 2280
+
+&#x2F;&#x2F; Client登录时向服务器发送的消息
+struct stLoginMessage
+&#123;
+ char userName[10];
+ char password[10];
+&#125;;
+
+&#x2F;&#x2F; Client注销时发送的消息
+struct stLogoutMessage
+&#123;
+ char userName[10];
+&#125;;
+
+&#x2F;&#x2F; Client向服务器请求另外一个Client(userName)向自己方向发送UDP打洞消息
+struct stP2PTranslate
+&#123;
+ char userName[10];
+&#125;;
+
+&#x2F;&#x2F; Client向服务器发送的消息格式
+struct stMessage
+&#123;
+ int iMessageType;
+ union _message
+ &#123;
+  stLoginMessage loginmember;
+  stLogoutMessage logoutmember;
+  stP2PTranslate translatemessage;
+ &#125;message;
+&#125;;
+
+&#x2F;&#x2F; 客户节点信息
+struct stUserListNode
+&#123;
+ char userName[10];
+ unsigned int ip;
+ unsigned short port;
+&#125;;
+
+&#x2F;&#x2F; Server向Client发送的消息
+struct stServerToClient
+&#123;
+ int iMessageType;
+ union _message
+ &#123;
+  stUserListNode user;
+ &#125;message;
+
+&#125;;
+
+&#x2F;&#x2F;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+&#x2F;&#x2F; 下面的协议用于客户端之间的通信
+&#x2F;&#x2F;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+#define P2PMESSAGE 100               &#x2F;&#x2F; 发送消息
+#define P2PMESSAGEACK 101            &#x2F;&#x2F; 收到消息的应答
+#define P2PSOMEONEWANTTOCALLYOU 102  &#x2F;&#x2F; 服务器向客户端发送的消息
+                                     &#x2F;&#x2F; 希望此客户端发送一个UDP打洞包
+#define P2PTRASH        103          &#x2F;&#x2F; 客户端发送的打洞包，接收端应该忽略此消息
+
+&#x2F;&#x2F; 客户端之间发送消息格式
+struct stP2PMessage
+&#123;
+ int iMessageType;
+ int iStringLen;         &#x2F;&#x2F; or IP address
+ unsigned short Port; 
+&#125;;
+
+using namespace std;
+typedef list&lt;stUserListNode *&gt; UserList;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">改变世界</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="https://axbx.gitee.io/20230601/learn_nathole/P2P%E4%B9%8BUDP%E7%A9%BF%E9%80%8FNAT%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0.html">https://axbx.gitee.io/20230601/learn_nathole/P2P%E4%B9%8BUDP%E7%A9%BF%E9%80%8FNAT%E7%9A%84%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E7%8E%B0.html</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">改变世界</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+                                    <span class="chip bg-color">基础知识</span>
+                                </a>
+                            
+                                <a href="/tags/%E7%AE%97%E6%B3%95/">
+                                    <span class="chip bg-color">算法</span>
+                                </a>
+                            
+                                <a href="/tags/%E7%BD%91%E7%BB%9C%E7%A9%BF%E9%80%8F/">
+                                    <span class="chip bg-color">网络穿透</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/images/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/images/wechatpay.jpg" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: 'ZoIIzRnqqmEF533l0omzuUor-gzGzoHsz',
+        appKey: 'l8xXEF6KiMHVKhqAMce6mduq',
+        serverURLs: 'https://zoiizrnq.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'true' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/20230601/learn_nathole/NAT%E7%A9%BF%E9%80%8F%E6%8A%80%E6%9C%AF%E3%80%81%E7%A9%BF%E9%80%8F%E5%8E%9F%E7%90%86%E5%92%8C%E6%96%B9%E6%B3%95%E8%AF%A6%E8%A7%A3.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="NAT穿透技术、穿透原理和方法详解">
+                        
+                        <span class="card-title">NAT穿透技术、穿透原理和方法详解</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2023-06-01
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" class="post-category">
+                                    学习笔记
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+                        <span class="chip bg-color">基础知识</span>
+                    </a>
+                    
+                    <a href="/tags/%E7%AE%97%E6%B3%95/">
+                        <span class="chip bg-color">算法</span>
+                    </a>
+                    
+                    <a href="/tags/%E7%BD%91%E7%BB%9C%E7%A9%BF%E9%80%8F/">
+                        <span class="chip bg-color">网络穿透</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/20230530/more_reverse/MCU%E5%8A%A0%E5%AF%86%E6%8A%80%E6%9C%AF%E8%BF%9B%E5%8C%96%E5%8F%B2.html">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="如何防止破解？MCU加密技术进化史">
+                        
+                        <span class="card-title">如何防止破解？MCU加密技术进化史</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-05-30
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E8%8A%AF%E7%89%87%E7%A0%B4%E8%A7%A3/" class="post-category">
+                                    芯片破解
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+                        <span class="chip bg-color">基础知识</span>
+                    </a>
+                    
+                    <a href="/tags/%E6%9D%82%E8%B0%88%E9%97%B2%E8%AF%AD/">
+                        <span class="chip bg-color">杂谈闲语</span>
+                    </a>
+                    
+                    <a href="/tags/%E8%8A%AF%E7%89%87%E7%A0%B4%E8%A7%A3/">
+                        <span class="chip bg-color">芯片破解</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE' || selection.getRangeAt(0).commonAncestorContainer.nodeName === 'CODE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: 改变世界 的技术博客<br />'
+            + '文章作者: 改变世界<br />'
+            + '文章链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism-tomorrow.js"></script>
+
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+        <link rel="stylesheet" href="/libs/aplayer/APlayer.min.css">
+<style>
+    .aplayer .aplayer-lrc p {
+        
+        display: none;
+        
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 16px !important;
+    }
+
+    .aplayer .aplayer-lrc p.aplayer-lrc-current {
+        
+        display: none;
+        
+        font-size: 15px;
+        color: #42b983;
+    }
+
+    
+    .aplayer.aplayer-fixed.aplayer-narrow .aplayer-body {
+        left: -66px !important;
+    }
+
+    .aplayer.aplayer-fixed.aplayer-narrow .aplayer-body:hover {
+        left: 0px !important;
+    }
+
+    
+</style>
+<div class="">
+    
+    <div class="row">
+        <meting-js class="col l8 offset-l2 m10 offset-m1 s12"
+                   server="tencent"
+                   type="album"
+                   id="002PcLq62TA34E"
+                   fixed='true'
+                   autoplay='false'
+                   theme='#42b983'
+                   loop='all'
+                   order='random'
+                   preload='auto'
+                   volume='0.7'
+                   list-folded='true'
+        >
+        </meting-js>
+    </div>
+</div>
+
+<script src="/libs/aplayer/APlayer.min.js"></script>
+<script src="/libs/aplayer/Meting.min.js"></script>
+
+    
+
+    <div class="container row center-align"
+         style="margin-bottom: 15px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2023</span>
+            
+            <a href="/about" target="_blank">改变世界</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            
+            <br>
+            
+            
+            
+                
+            
+            
+                <span id="busuanzi_container_site_pv">
+                &nbsp;|&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;
+                    <span id="busuanzi_value_site_pv" class="white-color"></span>
+            </span>
+            
+            
+                <span id="busuanzi_container_site_uv">
+                &nbsp;|&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;
+                    <span id="busuanzi_value_site_uv" class="white-color"></span>
+            </span>
+            
+            <br>
+
+            <!-- 运行天数提醒. -->
+            
+                <span id="sitetime"> Loading ...</span>
+                <script>
+                    var calcSiteTime = function () {
+                        var seconds = 1000;
+                        var minutes = seconds * 60;
+                        var hours = minutes * 60;
+                        var days = hours * 24;
+                        var years = days * 365;
+                        var today = new Date();
+                        var startYear = "2023";
+                        var startMonth = "5";
+                        var startDate = "08";
+                        var startHour = "0";
+                        var startMinute = "0";
+                        var startSecond = "0";
+                        var todayYear = today.getFullYear();
+                        var todayMonth = today.getMonth() + 1;
+                        var todayDate = today.getDate();
+                        var todayHour = today.getHours();
+                        var todayMinute = today.getMinutes();
+                        var todaySecond = today.getSeconds();
+                        var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
+                        var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                        var diff = t2 - t1;
+                        var diffYears = Math.floor(diff / years);
+                        var diffDays = Math.floor((diff / days) - diffYears * 365);
+
+                        // 区分是否有年份.
+                        var language = 'zh-CN';
+                        if (startYear === String(todayYear)) {
+                            document.getElementById("year").innerHTML = todayYear;
+                            var daysTip = 'This site has been running for ' + diffDays + ' days';
+                            if (language === 'zh-CN') {
+                                daysTip = '本站已运行 ' + diffDays + ' 天';
+                            } else if (language === 'zh-HK') {
+                                daysTip = '本站已運行 ' + diffDays + ' 天';
+                            }
+                            document.getElementById("sitetime").innerHTML = daysTip;
+                        } else {
+                            document.getElementById("year").innerHTML = startYear + " - " + todayYear;
+                            var yearsAndDaysTip = 'This site has been running for ' + diffYears + ' years and '
+                                + diffDays + ' days';
+                            if (language === 'zh-CN') {
+                                yearsAndDaysTip = '本站已运行 ' + diffYears + ' 年 ' + diffDays + ' 天';
+                            } else if (language === 'zh-HK') {
+                                yearsAndDaysTip = '本站已運行 ' + diffYears + ' 年 ' + diffDays + ' 天';
+                            }
+                            document.getElementById("sitetime").innerHTML = yearsAndDaysTip;
+                        }
+                    }
+
+                    calcSiteTime();
+                </script>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/ekongyun" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:351217023@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=351217023" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 351217023" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="/atom.xml" class="tooltipped" target="_blank" data-tooltip="RSS 订阅" data-position="top" data-delay="50">
+        <i class="fas fa-rss"></i>
+    </a>
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 白天和黑夜主题 -->
+<div class="stars-con">
+    <div id="stars"></div>
+    <div id="stars2"></div>
+    <div id="stars3"></div>  
+</div>
+
+<script>
+    function switchNightMode() {
+        $('<div class="Cuteen_DarkSky"><div class="Cuteen_DarkPlanet"></div></div>').appendTo($('body')),
+        setTimeout(function () {
+            $('body').hasClass('DarkMode') 
+            ? ($('body').removeClass('DarkMode'), localStorage.setItem('isDark', '0'), $('#sum-moon-icon').removeClass("fa-sun").addClass('fa-moon')) 
+            : ($('body').addClass('DarkMode'), localStorage.setItem('isDark', '1'), $('#sum-moon-icon').addClass("fa-sun").removeClass('fa-moon')),
+            
+            setTimeout(function () {
+            $('.Cuteen_DarkSky').fadeOut(1e3, function () {
+                $(this).remove()
+            })
+            }, 2e3)
+        })
+    }
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    
+
+    
+    
+    
+
+    <!-- 雪花特效 -->
+     
+        <script type="text/javascript">
+            // 只在桌面版网页启用特效
+            var windowWidth = $(window).width();
+            if (windowWidth > 768) {
+                document.write('<script type="text/javascript" src="/libs/others/snow.js"><\/script>');
+            }
+        </script>
+    
+
+    <!-- 鼠标星星特效 -->
+    
+
+     
+        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
+        <script src="/libs/others/TencentCaptcha.js"></script>
+        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
+    
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+    <!--腾讯兔小巢-->
+    
+    
+
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
