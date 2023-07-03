@@ -503,7 +503,7 @@
                                         'img': '/medias/barrager/' + Math.floor(Math.random() * 3) + ".png",
                                         'href': '',
                                         'info': jsonObject.info+": "+jsonObject.content,
-                                        'speed': 20
+                                        'speed': typeof(jsonObject.speed)=='undefined' ? 20 : jsonObject.speed*10
                                     });
                                     index++;
                                 }
@@ -530,6 +530,7 @@
                         barrager.set('contact', contact);
                         barrager.set('content', content);
                         barrager.set('info', name);
+                        barrager.set('speed', math.floor(Math.random()*10));
                         barrager.save().then((todo) => {
                             $(" input[ name='name' ] ").val("")
                             $(" input[ name='content' ] ").val("")
